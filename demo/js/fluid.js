@@ -300,17 +300,28 @@ export function hexToRgb(hex) {
    numbers keep dye on screen longer. These are tuned so the field always holds
    visible colour without the pointer, but never so much that text over it
    stops being readable. */
+/* Tuning notes, because these interact and are easy to flail at:
+   - timeScale slows the whole simulation without changing its shape. It is the
+     "slower" dial; lowering forces instead makes it weaker, not slower.
+   - curl is vorticity confinement, i.e. the turbulence dial. High values put
+     back the small eddies advection smears out, which reads as chaotic; low
+     values give long smooth currents. This is the "less chaotic" dial.
+   - splatRadius is the "smaller" dial: the size of each injected blob.
+   - velocityDissipation damps motion over time. Too high and the field goes
+     static and the dye just sits there. */
 const DESKTOP = {
   simRes: 128, dyeRes: 1024, pressureIters: 20,
-  velocityDissipation: 0.28, densityDissipation: 0.62, curl: 30,
-  splatRadius: 0.24, splatForce: 6000, intensity: 1.5, maxDpr: 1.5,
-  ambient: 1.5,           /* emitters per second, 0 disables */
+  velocityDissipation: 0.4, densityDissipation: 0.085, curl: 9,
+  splatRadius: 0.14, splatForce: 3000, intensity: 1.45, maxDpr: 1.5,
+  ambient: 2.0,           /* emitters per second, 0 disables */
+  timeScale: 0.5,
 };
 const MOBILE = {
   simRes: 96, dyeRes: 512, pressureIters: 12,
-  velocityDissipation: 0.32, densityDissipation: 0.8, curl: 22,
-  splatRadius: 0.28, splatForce: 5000, intensity: 1.4, maxDpr: 1,
-  ambient: 1.0,
+  velocityDissipation: 0.45, densityDissipation: 0.12, curl: 7,
+  splatRadius: 0.17, splatForce: 2600, intensity: 1.35, maxDpr: 1,
+  ambient: 1.5,
+  timeScale: 0.5,
 };
 
 /**
@@ -657,7 +668,15 @@ export function createFluid(canvas, opts = {}) {
   function correctRadius(r, ar) { return ar > 1 ? r * ar : r; }
 
   const rand = () => Math.random();
-  const pick = () => palette[(rand() * palette.length) | 0];
+  /* Weighted, not uniform. Sun is the brand's secondary and reads far stronger
+     than Lume against a black ground, so picking evenly makes the background
+     look orange. Teal leads; orange is the accent. */
+  const PICK_WEIGHTS = opts.weights || [0.62, 0.14, 0.24];
+  function pick() {
+    let r = rand(), i = 0;
+    while (i < palette.length - 1 && r > (PICK_WEIGHTS[i] ?? 0)) { r -= PICK_WEIGHTS[i] ?? 0; i++; }
+    return palette[i];
+  }
 
   /**
    * Drag impulse from DOM/pointer coordinates (origin top-left, CSS pixels).
@@ -741,10 +760,10 @@ export function createFluid(canvas, opts = {}) {
         wait: 0,
         x: x + (rand() - 0.5) * 0.012,
         y: y0 + 0.010 + (rand() - 0.5) * 0.006,
-        dx: out * 900,
-        dy: up * 1500,                          /* positive = up */
+        dx: out * 520,
+        dy: up * 950,                          /* positive = up */
         color: plumeColor(s, 0.35),
-        rs: 0.5 + 0.22 * rand(),
+        rs: 0.45 + 0.18 * rand(),
       });
     }
 
@@ -753,8 +772,8 @@ export function createFluid(canvas, opts = {}) {
       wait: 4,
       x: (rect.left + rect.width * 0.5) / vw,
       y: y0 + 0.030,
-      dx: (rand() - 0.5) * 220,
-      dy: 2600 * energy,
+      dx: (rand() - 0.5) * 140,
+      dy: 1650 * energy,
       color: plumeColor(0, 0.15),
       rs: 0.34,
     });
@@ -785,15 +804,21 @@ export function createFluid(canvas, opts = {}) {
     if (ambientAccum < 1) return;
     ambientAccum -= 1;
     ambientPhase += 0.7;
-    const x = 0.5 + 0.42 * Math.sin(ambientPhase * 0.31);
-    const y = 0.5 + 0.34 * Math.sin(ambientPhase * 0.47 + 1.3);
+    /* Scattered across the whole viewport rather than along a path. At this
+       speed the fluid barely carries dye away from where it lands, so a path
+       would pool in one region and leave the rest of the screen black. The
+       wander is kept as a bias so placement is not uniformly random either. */
+    const bx = 0.5 + 0.30 * Math.sin(ambientPhase * 0.31);
+    const by = 0.5 + 0.26 * Math.sin(ambientPhase * 0.47 + 1.3);
+    const x = Math.min(0.96, Math.max(0.04, bx + (rand() - 0.5) * 0.85));
+    const y = Math.min(0.96, Math.max(0.04, by + (rand() - 0.5) * 0.8));
     const c = pick();
     const dir = ambientPhase % 2 < 1 ? 1 : -1;
     splat(x, y,
-          dir * (500 + rand() * 900),
-          (rand() - 0.35) * 900,
-          [c[0] * 0.42, c[1] * 0.42, c[2] * 0.42],
-          1.9);
+          dir * (220 + rand() * 300),
+          (rand() - 0.4) * 320,
+          [c[0] * 0.55, c[1] * 0.55, c[2] * 0.55],
+          1.5);
   }
 
   function frame(now) {
@@ -804,9 +829,9 @@ export function createFluid(canvas, opts = {}) {
     dt = Math.min(dt, 1 / 30);
     last = now;
     resize();
-    ambientStep(dt);
+    ambientStep(dt);          /* emitter rate stays on real time */
     drainQueue();
-    step(dt);
+    step(dt * cfg.timeScale); /* physics runs slow */
     render();
     raf = requestAnimationFrame(frame);
   }
@@ -824,7 +849,7 @@ export function createFluid(canvas, opts = {}) {
     resize();
     ambientStep(Math.min(dt, 1 / 30));
     drainQueue();
-    step(Math.min(dt, 1 / 30));
+    step(Math.min(dt, 1 / 30) * cfg.timeScale);
     render();
   }
   function pause() {
@@ -858,8 +883,8 @@ export function createFluid(canvas, opts = {}) {
   function seed(n = 6) {
     for (let i = 0; i < n; i++) {
       const c = pick();
-      splat(rand(), rand(), (rand() - 0.5) * 1600, (rand() - 0.5) * 1600,
-            [c[0] * 0.7, c[1] * 0.7, c[2] * 0.7], 2.1);
+      splat(rand(), rand(), (rand() - 0.5) * 620, (rand() - 0.5) * 620,
+            [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8], 1.35);
     }
   }
 
