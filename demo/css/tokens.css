@@ -1,0 +1,297 @@
+/* ==========================================================================
+   iLand — design tokens
+   One file, one source of truth. Everything downstream (storefront, admin,
+   brandbook) reads these variables and nothing else.
+
+   Typography here is not decoration — it encodes hard rules about setting
+   Mkhedruli (ქართული) next to Latin. Read the :lang(ka) blocks before
+   changing anything: Georgian has no uppercase, no italic, and needs both
+   more leading and more size than the Latin at the same nominal step.
+   ========================================================================== */
+
+/* --------------------------------------------------------------- fonts --- */
+/* Noto Sans Georgian is the only free variable face that sets Mkhedruli AND
+   Latin from one design, with a real 900 for display. Noto Sans carries
+   Russian, because Noto Sans Georgian ships cyrillic-ext but NOT base
+   Cyrillic. Both are the same Noto skeleton, so the seam is invisible.
+   The lari sign ₾ (U+20BE) lives in latin-ext — never subset it away. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:wght@300..700&display=swap');
+
+:root {
+  --font-display: 'Noto Sans Georgian', 'Noto Sans', system-ui, -apple-system,
+                  BlinkMacSystemFont, 'Segoe UI', Sylfaen, 'BPG Arial', 'BPG Glaho', sans-serif;
+  --font-text: var(--font-display);
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* ------------------------------------------------------------ palette --- */
+  /* Deep water → shoreline. The island read, taken seriously: a night-sea
+     ground, a lit horizon accent, warm sand for the human moments. Nobody in
+     the Georgian Apple market owns a colour except Zoommer's violet — and that
+     one reads cheap. */
+
+  /* Ground — the sea at depth */
+  --abyss:      #04070C;   /* page base, dark mode                          */
+  --deep:       #080D15;   /* raised surface                                */
+  --trench:     #0D141F;   /* card                                          */
+  --shelf:      #131C2A;   /* hover / input                                 */
+  --tide:       #1D2837;   /* hairline on dark                              */
+
+  /* Signal — bioluminescence at the waterline */
+  --lume-100:   #D6FBF2;
+  --lume-300:   #7FEFD8;
+  --lume:       #2FD6B4;   /* PRIMARY. CTA, focus, price-drop, live states.  */
+  --lume-700:   #12806A;   /* light-mode accent — see contrast note below    */
+  --lume-900:   #0A5346;
+
+  /* Horizon — the sun on the water, used for offers and warmth */
+  --sun-300:    #FFD9A8;
+  --sun:        #FF9F45;   /* SECONDARY. Sale, promo, urgency.              */
+  --sun-700:    #A85610;   /* light-mode promo — see contrast note below     */
+
+  /* Sand — light mode ground */
+  --sand-50:    #FBFAF7;
+  --sand-100:   #F4F1EA;
+  --sand-200:   #E7E2D7;
+  --sand-300:   #D3CCBC;
+
+  /* Ink — text on light */
+  --ink:        #0B1119;
+  --ink-2:      #3C4654;
+  --ink-3:      #66707F;   /* 4.80:1 on --sand-50 — AA (was #6B7688 at 4.40) */
+
+  /* Status */
+  --ok:         #34C77B;
+  --warn:       #F0B429;
+  --danger:     #F0554C;
+
+  /* ------------------------------------------------ semantic (dark = default) */
+  --bg:            var(--abyss);
+  --bg-raised:     var(--deep);
+  --surface:       var(--trench);
+  --surface-2:     var(--shelf);
+  --line:          var(--tide);
+  --line-strong:   #2B3949;
+  --text:          #EEF3F8;
+  --text-2:        #9FADBF;
+  --text-3:        #768396;   /* 4.80:1 on --surface — AA (was #6B7B8F at 4.27) */
+  --accent:        var(--lume);
+  --accent-ink:    #04211B;   /* text ON accent — 12.4:1 against --lume     */
+  --accent-soft:   color-mix(in oklab, var(--lume) 14%, transparent);
+  --promo:         var(--sun);
+  --promo-ink:     #2B1400;
+  --glass:         color-mix(in oklab, var(--deep) 72%, transparent);
+  --shadow-1:      0 1px 2px rgb(0 0 0 / .40);
+  --shadow-2:      0 12px 32px -12px rgb(0 0 0 / .60);
+  --shadow-3:      0 32px 80px -28px rgb(0 0 0 / .72);
+  --shadow-accent: 0 16px 44px -18px color-mix(in oklab, var(--lume) 60%, transparent);
+}
+
+/* ------------------------------------------------------------ light mode --- */
+:root[data-theme='light'] {
+  --bg:            var(--sand-50);
+  --bg-raised:     #FFFFFF;
+  --surface:       #FFFFFF;
+  --surface-2:     var(--sand-100);
+  --line:          var(--sand-200);
+  --line-strong:   var(--sand-300);
+  --text:          var(--ink);
+  --text-2:        var(--ink-2);
+  --text-3:        var(--ink-3);
+  /* Light mode needs its own accent: --lume #2FD6B4 is beautiful on the abyss
+     and unreadable on sand. The earlier value here (#14957C) measured only
+     3.58:1 as text on --sand-50 and 3.74:1 under white — both below the 4.5:1
+     AA floor for body text. #12806A measures 4.66:1 as text and 4.86:1 with
+     white on it; #A85610 replaces #C46A18 (3.71:1) at 5.03:1 / 5.25:1. */
+  --accent:        var(--lume-700);      /* 4.66:1 on --sand-50 — AA          */
+  --accent-ink:    #FFFFFF;              /* 4.86:1 on --accent — AA           */
+  --accent-soft:   color-mix(in oklab, var(--lume-700) 12%, transparent);
+  --promo:         var(--sun-700);       /* 5.03:1 on --sand-50 — AA          */
+  --promo-ink:     #FFFFFF;              /* 5.25:1 on --promo — AA            */
+  --glass:         color-mix(in oklab, #FFFFFF 74%, transparent);
+  --shadow-1:      0 1px 2px rgb(11 17 25 / .06);
+  --shadow-2:      0 12px 32px -14px rgb(11 17 25 / .16);
+  --shadow-3:      0 32px 80px -30px rgb(11 17 25 / .22);
+  --shadow-accent: 0 16px 44px -20px color-mix(in oklab, var(--lume-700) 44%, transparent);
+}
+
+/* ------------------------------------------------------------- type scale --- */
+/* Fluid, clamped, 320px → 1600px. Georgian gets its own overrides below. */
+:root {
+  --step--2: clamp(0.69rem, 0.67rem + 0.11vw, 0.75rem);
+  --step--1: clamp(0.83rem, 0.79rem + 0.19vw, 0.94rem);
+  --step-0:  clamp(1rem,    0.95rem + 0.25vw, 1.13rem);
+  --step-1:  clamp(1.2rem,  1.11rem + 0.44vw, 1.5rem);
+  --step-2:  clamp(1.44rem, 1.29rem + 0.73vw, 2rem);
+  --step-3:  clamp(1.73rem, 1.5rem + 1.14vw,  2.66rem);
+  --step-4:  clamp(2.07rem, 1.72rem + 1.75vw, 3.55rem);
+  --step-5:  clamp(2.49rem, 1.96rem + 2.63vw, 4.73rem);
+  --step-6:  clamp(2.99rem, 2.2rem + 3.92vw,  6.31rem);
+  --step-7:  clamp(3.58rem, 2.42rem + 5.79vw, 8.41rem);
+
+  /* ------------------------------------------------------------- spacing --- */
+  --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.75rem;  --sp-4: 1rem;
+  --sp-5: 1.5rem;   --sp-6: 2rem;     --sp-7: 3rem;     --sp-8: 4rem;
+  --sp-9: 6rem;     --sp-10: 8rem;    --sp-11: 12rem;
+
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --measure: 68ch;
+  --page: 88rem;
+
+  /* -------------------------------------------------------------- radii --- */
+  --r-1: 8px;  --r-2: 14px;  --r-3: 20px;  --r-4: 28px;  --r-5: 40px;
+  --r-pill: 999px;
+
+  /* ------------------------------------------------------------- motion --- */
+  /* Curves are named for their job. If unsure, --e-quiet at 180ms. */
+  --e-quiet:     cubic-bezier(0.40, 0.00, 0.20, 1.00); /* default state change */
+  --e-reveal:    cubic-bezier(0.16, 1.00, 0.30, 1.00); /* entrances 500–900ms  */
+  --e-swift:     cubic-bezier(0.22, 1.00, 0.36, 1.00); /* on-screen response   */
+  --e-exit:      cubic-bezier(0.55, 0.00, 1.00, 0.45); /* departures, ~40% off */
+  --e-pop:       cubic-bezier(0.34, 1.56, 0.64, 1.00); /* confirmations only   */
+  --e-cinematic: cubic-bezier(0.83, 0.00, 0.17, 1.00); /* viewport-scale moves */
+
+  --t-fast: 140ms;
+  --t-base: 220ms;
+  --t-slow: 480ms;
+  --t-reveal: 760ms;
+
+  --nav-h: 68px;
+  --z-nav: 100;  --z-drawer: 200;  --z-toast: 300;
+}
+
+/* A truer spring where the browser supports linear() — degrades to the bezier. */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --e-pop: linear(0, 0.402 7.4%, 0.842 15.3%, 1.183 24.2%, 1.226, 1.168 34.3%,
+                    1.056 42.4%, 0.994 48.5%, 1.001 63.6%, 1.006 79.8%, 1);
+  }
+}
+
+/* ==========================================================================
+   Script-aware typography
+   These blocks are the difference between a site that looks Georgian-native
+   and one that looks machine-translated.
+   ========================================================================== */
+
+/* Georgian: no uppercase exists, so casing utilities must be neutralised.
+   Mkhedruli's body height sits between Latin x-height and cap-height, so at an
+   identical font-size it reads smaller and lighter — bump it ~5%. Its tall
+   ascenders (ბ ზ ფ ჰ ლ) and deep descenders (გ ყ ც ძ ჭ ჯ ღ) collide at Latin
+   leading, so it needs more line-height. Negative tracking closes the round
+   counters of ო ფ ღ ძ and turns words to mush — never apply it. */
+:lang(ka) {
+  font-size: 1.05em;
+  line-height: 1.65;
+  letter-spacing: 0;
+  hyphens: none;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  font-variant-caps: normal;
+}
+
+/* Georgian has no italic tradition and Noto ships none — the browser would
+   synthesise a sheared Mkhedruli that natives read as broken. Use weight. */
+:lang(ka) em,
+:lang(ka) i {
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Eyebrows / labels: letterspaced caps in Latin and Cyrillic, plain in Georgian. */
+.eyebrow {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--text-3);
+}
+:lang(en) .eyebrow,
+:lang(ru) .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+:lang(ka) .eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+/* Display type. Latin can take tight tracking and 1.05 leading; Georgian cannot. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+}
+:lang(ka) .display {
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+/* Money and spec tables must never reflow as digits change. Mkhedruli has no
+   digits of its own — Georgian uses Western Arabic numerals, so the price and
+   the label are rendered by the same face and there is no mid-string jump. */
+.num,
+.price,
+.spec-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+/* ------------------------------------------------------------------ reset --- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Never `scroll-behavior: smooth` globally — it desynchronises the scrollbar,
+     breaks PageDown/Home/End and corrupts scroll-timeline accuracy. Opt in
+     per-anchor instead. */
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd { margin: 0; }
+ul[class], ol[class] { list-style: none; margin: 0; padding: 0; }
+img, svg, video { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-1);
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------------------------------------------------------- reduced motion --- */
+/* Deliberately NOT the blanket `* { animation: none !important }` rule — that
+   looks responsible and is a bug: any reveal whose resting state is opacity:0
+   becomes permanently invisible. Instead, resting states are authored visible
+   and only the ambient/decorative motion is switched off, per component. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-reveal: 1ms;
+  }
+  .ambient,
+  .marquee__track,
+  .aurora {
+    animation: none !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
