@@ -302,13 +302,13 @@ export function hexToRgb(hex) {
    stops being readable. */
 const DESKTOP = {
   simRes: 128, dyeRes: 1024, pressureIters: 20,
-  velocityDissipation: 0.2, densityDissipation: 0.22, curl: 30,
+  velocityDissipation: 0.28, densityDissipation: 0.62, curl: 30,
   splatRadius: 0.24, splatForce: 6000, intensity: 1.5, maxDpr: 1.5,
   ambient: 1.5,           /* emitters per second, 0 disables */
 };
 const MOBILE = {
   simRes: 96, dyeRes: 512, pressureIters: 12,
-  velocityDissipation: 0.26, densityDissipation: 0.32, curl: 22,
+  velocityDissipation: 0.32, densityDissipation: 0.8, curl: 22,
   splatRadius: 0.28, splatForce: 5000, intensity: 1.4, maxDpr: 1,
   ambient: 1.0,
 };
@@ -672,35 +672,98 @@ export function createFluid(canvas, opts = {}) {
           [c[0] * 0.32, c[1] * 0.32, c[2] * 0.32]);
   }
 
-  /**
-   * The landing splash. Fires an upward fan of splats at a DOM point so colour
-   * "flushes up from the ground" — a single radial blob reads as a bubble, a
-   * fan with upward velocity reads as displaced liquid.
-   * @param clientX,clientY DOM coords (origin top-left, CSS px)
-   * @param opts {count, spread, force, radiusScale, color}
-   */
-  function plume(clientX, clientY, opts2 = {}) {
-    const r = canvas.getBoundingClientRect();
-    const cx = (clientX - r.left) / r.width;
-    const cy = 1 - (clientY - r.top) / r.height;
-    if (cx < -0.2 || cx > 1.2 || cy < -0.2 || cy > 1.2) return;
+  /* ------------------------------------------------------------ splat queue */
 
-    const count = opts2.count ?? 5;
-    const spread = opts2.spread ?? 0.055;      /* horizontal scatter, uv units */
-    const force = opts2.force ?? 1.0;
-    const rs = opts2.radiusScale ?? 1.25;
-    const base = opts2.color ? hexToRgb(opts2.color) : pick();
+  /* Splats are queued and drained inside the sim's own frame rather than fired
+     immediately. Two reasons: a fast scroll can land six cards in one frame and
+     36 splats in a single frame is a visible hitch, and beat 2 of the plume has
+     to be frame-synced (a setTimeout drifts against the animation under load). */
+  const queue = [];
+  const MAX_SPLATS_PER_FRAME = 6;
 
-    for (let i = 0; i < count; i++) {
-      const t = count === 1 ? 0 : (i / (count - 1)) * 2 - 1;   /* -1..1 */
-      const x = cx + t * spread;
-      const y = cy + (rand() - 0.5) * 0.012;
-      /* Sideways at the edges of the fan, straight up in the middle. */
-      const dx = t * 420 * force + (rand() - 0.5) * 120;
-      const dy = (900 + rand() * 620) * force * (1 - Math.abs(t) * 0.45);
-      const jitter = 0.82 + rand() * 0.5;
-      splat(x, y, dx, dy, [base[0] * jitter, base[1] * jitter, base[2] * jitter], rs);
+  function drainQueue() {
+    let budget = MAX_SPLATS_PER_FRAME;
+    for (let i = 0; i < queue.length && budget > 0; ) {
+      const s = queue[i];
+      if (s.wait > 0) { s.wait--; i++; continue; }
+      splat(s.x, s.y, s.dx, s.dy, s.color, s.rs);
+      queue.splice(i, 1);
+      budget--;
     }
+    /* Never let a backlog build: a long fling could otherwise queue faster than
+       the budget drains and splash seconds after the card landed. */
+    if (queue.length > 48) queue.length = 48;
+  }
+
+  const LUME = hexToRgb('#2FD6B4');
+  const SUN  = hexToRgb('#FF9F45');
+
+  /** Centre of the plume is Lume, the edges drift toward Sun. */
+  function plumeColor(s, spread) {
+    const k = Math.min(1, Math.abs(s) * 0.55 + rand() * spread);
+    const g = 0.5 + 0.34 * rand();
+    return [
+      (LUME[0] + (SUN[0] - LUME[0]) * k) * g,
+      (LUME[1] + (SUN[1] - LUME[1]) * k) * g,
+      (LUME[2] + (SUN[2] - LUME[2]) * k) * g,
+    ];
+  }
+
+  /**
+   * The landing splash: colour flushing up out of the ground where a card hit.
+   *
+   * A single splat is always a blob — the pressure projection turns one point
+   * impulse into a symmetric vortex ring. What reads as an impact is a LINE
+   * source across the contact edge, velocity fanned outward from the centre,
+   * and two beats in time: a wide lateral spray, then a narrow core a few
+   * frames later that punches up through it.
+   *
+   * @param rect  DOM rect of the thing that landed — needs left/width/bottom
+   * @param opts  { energy, count }
+   */
+  function plumeUnder(rect, opts2 = {}) {
+    const vw = canvas.clientWidth || innerWidth;
+    const vh = canvas.clientHeight || innerHeight;
+    const energy = opts2.energy ?? 1;
+    const N = opts2.count ?? (isMobile ? 3 : 5);
+
+    const y0 = 1 - rect.bottom / vh;           /* contact line, fluid space */
+    if (y0 < -0.15 || y0 > 1.15) return;
+
+    /* Beat 1 — lateral spray along the contact line. */
+    for (let i = 0; i < N; i++) {
+      const t = (i + 0.5) / N;
+      const s = t * 2 - 1;
+      const x = (rect.left + rect.width * t) / vw;
+      const up = (0.55 + 0.45 * Math.cos(s * 1.35)) * energy;
+      const out = s * 0.85 * energy;
+      queue.push({
+        wait: 0,
+        x: x + (rand() - 0.5) * 0.012,
+        y: y0 + 0.010 + (rand() - 0.5) * 0.006,
+        dx: out * 900,
+        dy: up * 1500,                          /* positive = up */
+        color: plumeColor(s, 0.35),
+        rs: 0.5 + 0.22 * rand(),
+      });
+    }
+
+    /* Beat 2 — the core column, four frames later. */
+    queue.push({
+      wait: 4,
+      x: (rect.left + rect.width * 0.5) / vw,
+      y: y0 + 0.030,
+      dx: (rand() - 0.5) * 220,
+      dy: 2600 * energy,
+      color: plumeColor(0, 0.15),
+      rs: 0.34,
+    });
+  }
+
+  /** Point-source convenience wrapper, for anything without a rect. */
+  function plume(clientX, clientY, opts2 = {}) {
+    const w = (opts2.width ?? 220);
+    plumeUnder({ left: clientX - w / 2, width: w, bottom: clientY }, opts2);
   }
 
   /* ------------------------------------------------------------------- loop */
@@ -742,6 +805,7 @@ export function createFluid(canvas, opts = {}) {
     last = now;
     resize();
     ambientStep(dt);
+    drainQueue();
     step(dt);
     render();
     raf = requestAnimationFrame(frame);
@@ -759,6 +823,7 @@ export function createFluid(canvas, opts = {}) {
   function tick(dt = 1 / 60) {
     resize();
     ambientStep(Math.min(dt, 1 / 30));
+    drainQueue();
     step(Math.min(dt, 1 / 30));
     render();
   }
@@ -802,8 +867,8 @@ export function createFluid(canvas, opts = {}) {
 
   return {
     supported: true, isWebGL2, supportLinear, config: cfg,
-    splat, plume, pointerAt, resize, pause, resume, destroy, seed, tick,
+    splat, plume, plumeUnder, pointerAt, resize, pause, resume, destroy, seed, tick,
     get running() { return running; },
-    stats: () => ({ simW, simH, dyeW, dyeH, dpr }),
+    stats: () => ({ simW, simH, dyeW, dyeH, dpr, queued: queue.length }),
   };
 }

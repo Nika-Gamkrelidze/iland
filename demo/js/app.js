@@ -7,6 +7,8 @@
 import * as S from './store.js';
 import { deviceSVG } from './devices.js';
 import { UI, TICKER, STORY } from './i18n.js';
+import { createFluid } from './fluid.js';
+import { createChoreography } from './fx.js';
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -108,6 +110,7 @@ function productCard(p) {
         </div>
       </div>
     </div>
+    <i class="card__floor" aria-hidden="true"></i>
   </article>`;
 }
 
@@ -436,6 +439,9 @@ function paint() {
   markNav(r);
   wireView(r);
   observeReveals();
+  /* Synchronous, before the browser paints: arming the cards a task later would
+     show them at rest and then snap them up to the pre-fall offset. */
+  choreo?.attach(main);
 }
 
 /** View Transitions make the card → PDP change feel like one continuous object. */
@@ -1100,12 +1106,62 @@ function wireChrome() {
   }, { passive: true });
 }
 
+/* ------------------------------------------------------------ fluid ground */
+
+let fluid = null;
+let choreo = null;
+
+function bootFluid() {
+  const canvas = $('#fluid');
+  if (!canvas) return;
+
+  fluid = createFluid(canvas, {
+    palette: ['#2FD6B4', '#FF9F45', '#7FEFD8'],
+    ground: '#04070C',
+  });
+
+  if (!fluid.supported) {
+    /* The CSS gradient on #fluid stays as the background. Nothing else to do —
+       and nothing else may call into the sim. */
+    console.info(`iLand: fluid background off (${fluid.reason}); using CSS ground.`);
+    fluid = null;
+    return;
+  }
+
+  document.body.classList.add('has-fluid');
+  fluid.seed(7);
+
+  /* Drag pushes the fluid. Listened on window rather than the canvas, because
+     the canvas is behind the DOM with pointer-events: none. */
+  let px = 0, py = 0, tracking = false;
+  addEventListener('pointerdown', e => { tracking = true; px = e.clientX; py = e.clientY; }, { passive: true });
+  addEventListener('pointerup', () => { tracking = false; }, { passive: true });
+  addEventListener('pointercancel', () => { tracking = false; }, { passive: true });
+  addEventListener('pointermove', e => {
+    /* Fine pointers paint on hover; coarse ones only while dragging, so a scroll
+       gesture does not smear dye across the screen. */
+    const fine = e.pointerType === 'mouse';
+    if (!fine && !tracking) return;
+    const dx = e.clientX - px, dy = e.clientY - py;
+    px = e.clientX; py = e.clientY;
+    if (Math.abs(dx) + Math.abs(dy) < 1.5) return;
+    fluid.pointerAt(e.clientX, e.clientY, dx, dy);
+  }, { passive: true });
+
+  choreo = createChoreography(fluid);
+
+  /* Debug handle: lets the fluid be inspected and driven from the console
+     without shipping a GUI. Read-only from the site's point of view. */
+  window.iLand = { fluid, choreo };
+}
+
 function boot() {
   makeGrain();
   applyTheme();
   applyLang();
   wireChrome();
   syncCartCount();
+  bootFluid();
   render();
 
   addEventListener('hashchange', render);

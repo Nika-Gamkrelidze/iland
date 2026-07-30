@@ -3,6 +3,36 @@
    Depends only on tokens.css. No framework, no CDN, no build step.
    ========================================================================== */
 
+/* ----------------------------------------------------------- fluid ground --- */
+
+/* Fixed, so viewport coordinates ARE canvas coordinates and the splash never
+   has to compensate for scroll. Behind everything, and never a pointer target —
+   drag input is read from window instead. */
+#fluid {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Until the sim reports support, this gradient is what the user sees; it also
+     stays as the permanent background when WebGL is unavailable. */
+  background:
+    radial-gradient(38% 44% at 18% 22%, color-mix(in oklab, var(--lume) 26%, transparent), transparent 70%),
+    radial-gradient(32% 38% at 82% 16%, color-mix(in oklab, var(--sun) 18%, transparent), transparent 70%),
+    var(--abyss);
+}
+:root[data-theme='light'] #fluid { display: none; }
+
+/* When the fluid owns the background, the page and its sections must not paint
+   over it. */
+body.has-fluid { background: transparent; }
+body.has-fluid .hero .aurora,
+body.has-fluid .hero .grain { display: none; }
+body.has-fluid .foot { background: color-mix(in oklab, var(--bg-raised) 82%, transparent); }
+body.has-fluid .nav { background: color-mix(in oklab, var(--abyss) 62%, transparent); }
+
 /* ------------------------------------------------------------- primitives --- */
 
 .wrap {
@@ -533,7 +563,81 @@
               box-shadow var(--t-slow) var(--e-swift),
               translate var(--t-slow) var(--e-swift);
 }
-.card:hover { border-color: var(--line-strong); translate: 0 -5px; box-shadow: var(--shadow-3); }
+/* Hover lift uses `transform`, NOT `translate` — the fall animation owns
+   `translate`, and the two individual properties compose rather than fight.
+   Putting hover on `translate` hijacks a falling card mid-flight, so
+   `animationend` never fires: no splash, and the card can stick in mid-air. */
+.card:hover { border-color: var(--line-strong); transform: translateY(-5px); box-shadow: var(--shadow-3); }
+.card { transition-property: border-color, box-shadow, transform; }
+
+/* ------------------------------------------------------------- card fall --- */
+
+/* The 1px sentinel the observer actually watches. It sits on the contact line,
+   which is the only edge that matters for triggering the splash. */
+.card__floor {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Armed and falling states are added by JS only. A card with no JS, or with a
+   thrown error in the choreography, is simply visible at rest. */
+.card.is-armed {
+  translate: 0 calc(-1 * var(--fall-dist));
+  opacity: 0;
+}
+.card.is-falling {
+  animation: fall-y var(--fall-dur) var(--e-fall) var(--fall-delay) both,
+             fall-o calc(var(--fall-dur) * 0.4) linear var(--fall-delay) both;
+  will-change: translate, opacity;
+}
+.card.is-landed { will-change: auto; }
+
+@keyframes fall-y {
+  from { translate: 0 calc(-1 * var(--fall-dist)); }
+  to   { translate: 0 0; }
+}
+/* Fade over the first 40% only. A card that is invisible for the whole flight
+   has no perceived travel — you need to watch it hit. */
+@keyframes fall-o {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Contact flash: the visual bridge between the card and the fluid plume. No
+   geometric squash — the card has a 1px border and a 28px radius, and any
+   non-uniform scale visibly distorts both and stretches the Georgian type.
+   ::after is already the pointer sheen, so this is ::before. */
+.card.is-landed::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 40%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to top,
+              color-mix(in oklab, var(--accent) 55%, transparent), transparent 78%);
+  mix-blend-mode: screen;
+  animation: contact 620ms var(--e-reveal) both;
+}
+@keyframes contact {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 40rem) {
+  /* 160px is a jarring jump next to a card on a 360px-wide phone. */
+  :root { --fall-dist: 96px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* `reduce` means no large-area motion, not shorter motion. */
+  .card.is-armed { translate: none; opacity: 1; }
+  .card.is-falling { animation: none; }
+  .card.is-landed::before { animation: none; opacity: 0; }
+}
 
 /* Specular sheen follows the pointer. --mx/--my are written by one delegated
    pointermove handler, batched into a single rAF. */

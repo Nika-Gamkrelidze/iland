@@ -149,6 +149,10 @@
   --e-exit:      cubic-bezier(0.55, 0.00, 1.00, 0.45); /* departures, ~40% off */
   --e-pop:       cubic-bezier(0.34, 1.56, 0.64, 1.00); /* confirmations only   */
   --e-cinematic: cubic-bezier(0.83, 0.00, 0.17, 1.00); /* viewport-scale moves */
+  /* Gravity. Every other curve here decelerates, which reads as floating into
+     place; an impact needs terminal velocity AT contact, so this one is ease-IN.
+     Terminal slope ~2.55, between quadratic (real gravity) and cubic. */
+  --e-fall:      cubic-bezier(0.33, 0.00, 0.66, 0.15);
 
   --t-fast: 140ms;
   --t-base: 220ms;
@@ -157,6 +161,12 @@
 
   --nav-h: 68px;
   --z-nav: 100;  --z-drawer: 200;  --z-toast: 300;
+
+  /* Card fall. 160px/380ms gives a terminal speed of ~18px per frame at 60fps —
+     fast enough to read as speed, slow enough not to strobe. */
+  --fall-dist: 160px;
+  --fall-dur: 380ms;
+  --fall-delay: 0ms;
 }
 
 /* A truer spring where the browser supports linear() — degrades to the bezier. */
