@@ -1,5 +1,45 @@
 # iLand — rebrand and site rebuild
 
+> **Branch `fluid`.** This branch adds an interactive WebGL fluid background and
+> scroll choreography on top of the design on `main`. `main` is the calm version
+> and stays as it is — `git checkout main` to compare.
+
+## The fluid version, in one paragraph
+
+The page background is a live GPU fluid simulation. Drag anywhere and you push
+the ink. As you scroll, product cards fall in from above, and the moment each one
+lands it displaces the ground — a plume of brand colour flushes up out of the
+contact line. Everything degrades: without WebGL, without a float render target,
+in light mode, or with `prefers-reduced-motion`, you get the `main` design back
+with no dangling references.
+
+| File | What it is |
+| --- | --- |
+| [demo/js/fluid.js](demo/js/fluid.js) | The solver. Stable-fluids, ~10 GPU passes per frame, `plume()` for impacts. |
+| [demo/js/fx.js](demo/js/fx.js) | The choreography. Observer → fall → `animationend` → splash. |
+| [demo/css/fluid.css](demo/css/fluid.css) | The design layer. Glass surfaces and text scrims, all scoped to `body.has-fluid`. |
+| [demo/fluid-test.html](demo/fluid-test.html) | Solver harness — drag, `plume()`, `seed()`, and a pixel probe. |
+
+Open the harness at <http://localhost:4321/demo/fluid-test.html> to see the sim on
+its own.
+
+`window.iLand` exposes `{ fluid, choreo }` in the console — `iLand.fluid.plume(x, y)`
+fires a splash anywhere, and `iLand.fluid.stats()` reports resolution and queue depth.
+
+### Why this solver and not a library
+
+PavelDoGreat's WebGL-Fluid-Simulation is MIT and excellent, and the honest
+argument for vendoring it is that a hand-written ping-pong pipeline fails in the
+"looks slightly wrong" direction. It was rejected anyway for one reason: the
+choreography has to drive the fluid. `plumeUnder(rect)` needs to deposit a line
+source across a card's bottom edge with velocity fanned out from the centre and a
+second beat four frames later. That is not a parameter on someone else's `splat()`,
+and adapting an IIFE with a bundled GUI into an ES module is most of the work of
+writing the solver. So the pipeline follows the same reference the library does
+(Stam 1999, GPU Gems 38) and is verified against a pixel probe rather than by eye.
+
+
+
 A demo rebuild of [iland.ge](https://iland.ge) — Apple sales and service, Vake, Tbilisi —
 together with a brandbook and an AI logo-generation prompt pack.
 

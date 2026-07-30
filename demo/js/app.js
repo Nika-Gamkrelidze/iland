@@ -298,8 +298,10 @@ function viewCategory(catId) {
   const items = S.inCategory(catId, st);
   return `
   <section class="section wrap">
-    <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
-    <h1 class="section__title mt-3" style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
+    <header class="page-head">
+      <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
+      <h1 class="section__title mt-3" style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
+    </header>
     <div class="flex wrap-flex gap-2 mt-5" id="sortRow">
       <button class="chip is-on" data-sort="popular">${esc(u('sortPopular'))}</button>
       <button class="chip" data-sort="asc">${esc(u('sortPriceUp'))}</button>
@@ -1018,6 +1020,16 @@ function applyLang() {
 function applyTheme() {
   const th = S.getTheme();
   document.documentElement.dataset.theme = th;
+
+  /* The fluid is a dark-mode device: on the sand ground it would have to fight
+     the page and lose. So light mode drops the class (which also switches the
+     glass surfaces back to solid — they are tinted with dark palette tokens)
+     and stops the sim entirely rather than rendering something nobody sees. */
+  if (fluid) {
+    const on = th === 'dark';
+    document.body.classList.toggle('has-fluid', on);
+    if (on) fluid.resume(); else fluid.pause();
+  }
   $('#themeIcon').innerHTML = th === 'dark'
     ? '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'
     : '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>';
@@ -1128,7 +1140,6 @@ function bootFluid() {
     return;
   }
 
-  document.body.classList.add('has-fluid');
   fluid.seed(7);
 
   /* Drag pushes the fluid. Listened on window rather than the canvas, because
@@ -1162,6 +1173,7 @@ function boot() {
   wireChrome();
   syncCartCount();
   bootFluid();
+  applyTheme();      /* again, now that `fluid` exists, to set has-fluid */
   render();
 
   addEventListener('hashchange', render);

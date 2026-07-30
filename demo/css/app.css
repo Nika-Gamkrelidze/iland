@@ -3,36 +3,6 @@
    Depends only on tokens.css. No framework, no CDN, no build step.
    ========================================================================== */
 
-/* ----------------------------------------------------------- fluid ground --- */
-
-/* Fixed, so viewport coordinates ARE canvas coordinates and the splash never
-   has to compensate for scroll. Behind everything, and never a pointer target —
-   drag input is read from window instead. */
-#fluid {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  /* Until the sim reports support, this gradient is what the user sees; it also
-     stays as the permanent background when WebGL is unavailable. */
-  background:
-    radial-gradient(38% 44% at 18% 22%, color-mix(in oklab, var(--lume) 26%, transparent), transparent 70%),
-    radial-gradient(32% 38% at 82% 16%, color-mix(in oklab, var(--sun) 18%, transparent), transparent 70%),
-    var(--abyss);
-}
-:root[data-theme='light'] #fluid { display: none; }
-
-/* When the fluid owns the background, the page and its sections must not paint
-   over it. */
-body.has-fluid { background: transparent; }
-body.has-fluid .hero .aurora,
-body.has-fluid .hero .grain { display: none; }
-body.has-fluid .foot { background: color-mix(in oklab, var(--bg-raised) 82%, transparent); }
-body.has-fluid .nav { background: color-mix(in oklab, var(--abyss) 62%, transparent); }
-
 /* ------------------------------------------------------------- primitives --- */
 
 .wrap {
