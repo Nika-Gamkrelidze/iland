@@ -117,7 +117,8 @@ function productCard(p) {
       ${productMedia(p, { hex: color })}
     </div>
     <h3 class="card__name">${esc(p.name)}</h3>
-    <p class="card__tag">${esc(tt(p.tagline))}</p>
+    ${tt(p.tagline) ? `<p class="card__tag">${esc(tt(p.tagline))}</p>`
+                    : `<p class="card__tag dim">${esc(p.group || '')}</p>`}
     <div class="card__foot">
       ${priceBlock(p)}
       <div class="flex between items-center mt-3">
@@ -309,6 +310,23 @@ function serviceCard(s) {
   </article>`;
 }
 
+/* Accessories are 155 products across eleven groups on the live site. Without a
+   second axis of filtering that category is an undifferentiated wall. */
+/* A product can belong to more than one group — the live site cross-lists
+   AirPods Max under both Headphones and Made by Apple — so membership is tested
+   against the whole list, not just the primary. */
+const inGroup = (p, g) => (p.groups || (p.group ? [p.group] : [])).includes(g);
+
+function groupChips(items) {
+  const groups = [...new Set(items.flatMap(p => p.groups || (p.group ? [p.group] : [])))].sort();
+  if (groups.length < 2) return '';
+  return `<div class="flex wrap-flex gap-2 mt-5" id="groupRow">
+    <button class="chip is-on" data-group="">${esc(u('all'))} <span class="dim num">${items.length}</span></button>
+    ${groups.map(g => `<button class="chip" data-group="${esc(g)}">${esc(g)}
+      <span class="dim num">${items.filter(p => inGroup(p, g)).length}</span></button>`).join('')}
+  </div>`;
+}
+
 function viewCategory(catId) {
   const st = S.getState();
   const cat = st.categories.find(c => c.id === catId);
@@ -322,6 +340,7 @@ function viewCategory(catId) {
       <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
       <h1 class="section__title mt-3" data-adaptive style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
     </header>
+    ${groupChips(items)}
     <div class="flex wrap-flex gap-2 mt-5" id="sortRow">
       <button class="chip is-on" data-sort="popular">${esc(u('sortPopular'))}</button>
       <button class="chip" data-sort="asc">${esc(u('sortPriceUp'))}</button>
@@ -355,7 +374,7 @@ function viewProduct(id) {
         <div class="stage__glow" aria-hidden="true"></div>
         ${productMedia(p, { hex: color, eager: true })}
       </div>
-      <div class="mt-6">
+      <div class="mt-6"${(p.specs || []).length ? '' : ' hidden'}>
         <h2 class="section__title" style="font-size:var(--step-2)">${esc(u('specs'))}</h2>
         <div class="mt-4">
           ${(p.specs || []).map(s => `
@@ -374,7 +393,7 @@ function viewProduct(id) {
     <div class="pdp__buy">
       <div class="flex gap-2 items-center">${badgeFor(p)} ${stockPill(p)}</div>
       <h1 class="pdp__title mt-3">${esc(p.name)}</h1>
-      <p class="muted mt-3">${esc(tt(p.tagline))}</p>
+      ${tt(p.tagline) ? `<p class="muted mt-3">${esc(tt(p.tagline))}</p>` : ''}
 
       <div class="mt-5" id="pdpPrice">${priceBlock({ ...p, price: pr.base }, { big: true })}</div>
 
@@ -529,15 +548,33 @@ function wireView(r) {
 function wireSort() {
   const grid = $('#catGrid');
   const cat = parse().arg;
+  /* Sort and group are independent axes, so both re-run the same pipeline
+     rather than each clobbering the other's result. */
+  let sortMode = 'popular';
+  let group = '';
+
+  const apply = () => {
+    let items = S.inCategory(cat);
+    if (group) items = items.filter(p => inGroup(p, group));
+    if (sortMode === 'asc')  items = [...items].sort((a, b) => S.priceOf(a).final - S.priceOf(b).final);
+    if (sortMode === 'desc') items = [...items].sort((a, b) => S.priceOf(b).final - S.priceOf(a).final);
+    if (sortMode === 'off')  items = [...items].sort((a, b) => S.priceOf(b).off - S.priceOf(a).off);
+    grid.innerHTML = items.length
+      ? items.map(productCard).join('')
+      : `<p class="dim">${esc(u('nothingHere'))}</p>`;
+    wireView({ name: 'category', arg: cat });
+  };
+
   $$('#sortRow .chip').forEach(chip => chip.addEventListener('click', () => {
     $$('#sortRow .chip').forEach(c => c.classList.toggle('is-on', c === chip));
-    const mode = chip.dataset.sort;
-    let items = S.inCategory(cat);
-    if (mode === 'asc')  items = [...items].sort((a, b) => S.priceOf(a).final - S.priceOf(b).final);
-    if (mode === 'desc') items = [...items].sort((a, b) => S.priceOf(b).final - S.priceOf(a).final);
-    if (mode === 'off')  items = [...items].sort((a, b) => S.priceOf(b).off - S.priceOf(a).off);
-    grid.innerHTML = items.map(productCard).join('');
-    wireView({ name: 'category', arg: cat });
+    sortMode = chip.dataset.sort;
+    apply();
+  }));
+
+  $$('#groupRow .chip').forEach(chip => chip.addEventListener('click', () => {
+    $$('#groupRow .chip').forEach(c => c.classList.toggle('is-on', c === chip));
+    group = chip.dataset.group || '';
+    apply();
   }));
 }
 

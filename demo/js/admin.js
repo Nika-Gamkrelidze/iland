@@ -119,6 +119,10 @@ const A = {
   fName:        { ka: 'დასახელება',            en: 'Name',               ru: 'Название' },
   fSku:         { ka: 'SKU კოდი',              en: 'SKU',                ru: 'Артикул' },
   fDevice:      { ka: 'ილუსტრაციის ტიპი',      en: 'Illustration',       ru: 'Иллюстрация' },
+  fImage:       { ka: 'ფოტოს მისამართი',       en: 'Photo path',         ru: 'Путь к фото' },
+  fImageHint:   { ka: 'ცარიელი დატოვე და დაიხატება ილუსტრაცია.',
+                  en: 'Leave empty to fall back to the drawn illustration.',
+                  ru: 'Оставьте пустым — будет нарисованная иллюстрация.' },
   fGroup:       { ka: 'აქსესუარის ჯგუფი',      en: 'Accessory group',    ru: 'Группа аксессуаров' },
   fCondition:   { ka: 'მდგომარეობა',           en: 'Condition',          ru: 'Состояние' },
   condNew:      { ka: 'ახალი',                 en: 'New',                ru: 'Новый' },
@@ -911,6 +915,7 @@ function readProduct(form, base) {
   d.category = val(form, 'category');
   d.device = val(form, 'device');
   d.group = val(form, 'group') || undefined;
+  d.image = val(form, 'image').trim() || undefined;
   d.condition = val(form, 'condition');
   d.badge = val(form, 'badge') || null;
   d.featured = checked(form, 'featured');
@@ -974,6 +979,10 @@ function openProductSheet(id) {
       ${tf('rating', u('fRating'), draft.rating ?? 5, { type: 'number', attrs: 'step="0.1" min="0" max="5"' })}
       ${tf('reviews', u('fReviews'), draft.reviews ?? 0, { type: 'number', attrs: 'step="1" min="0"' })}
     </div>
+    <div class="a-row">
+      ${tf('image', u('fImage'), draft.image || '', { attrs: 'placeholder="assets/products/p438.jpg"' })}
+    </div>
+    <p class="a-hint">${esc(u('fImageHint'))}</p>
     <div class="a-check">${toggle('featured', u('fFeatured'), !!draft.featured)}</div>
   </div>
 
