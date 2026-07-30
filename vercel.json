@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "destination": "/demo/index.html" },
+    { "source": "/admin", "destination": "/demo/admin.html" },
+    { "source": "/brandbook", "destination": "/brand/brandbook.html" },
+    { "source": "/fluid-test", "destination": "/demo/fluid-test.html" }
+  ],
+  "headers": [
+    {
+      "source": "/demo/js/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "text/javascript; charset=utf-8" }
+      ]
+    }
+  ]
+}
