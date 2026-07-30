@@ -254,6 +254,11 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* `clip`, not `hidden`. Decorative layers here deliberately bleed past their
+     container (scrims, aurora, plume glow) and must never produce a horizontal
+     scrollbar. `hidden` would also work visually but creates a scroll container,
+     which breaks `position: sticky` on the nav; `clip` does not. */
+  overflow-x: clip;
   /* Never `scroll-behavior: smooth` globally — it desynchronises the scrollbar,
      breaks PageDown/Home/End and corrupts scroll-timeline accuracy. Opt in
      per-anchor instead. */

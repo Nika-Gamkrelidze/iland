@@ -32,10 +32,14 @@
     var(--abyss);
 }
 
-/* The fluid is a dark-mode device. In light mode it would have to fight the
-   sand ground and lose, so it simply steps aside. */
-:root[data-theme='light'] #fluid { display: none; }
-:root[data-theme='light'] body.has-fluid { background: var(--bg); }
+/* The canvas paints its own ground in both themes, so the element's fallback
+   gradient only shows before the first frame or when WebGL is unavailable. */
+:root[data-theme='light'] #fluid {
+  background:
+    radial-gradient(38% 44% at 18% 22%, color-mix(in oklab, var(--lume-700) 16%, transparent), transparent 70%),
+    radial-gradient(32% 38% at 82% 16%, color-mix(in oklab, var(--sun-700) 12%, transparent), transparent 70%),
+    var(--sand-50);
+}
 
 body.has-fluid { background: transparent; }
 
@@ -46,25 +50,25 @@ body.has-fluid .grain { display: none !important; }
 /* ---------------------------------------------------------------- chrome --- */
 
 body.has-fluid .marquee {
-  background: color-mix(in oklab, var(--abyss) 72%, transparent);
+  background: color-mix(in oklab, var(--bg) 74%, transparent);
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
           backdrop-filter: blur(14px) saturate(1.3);
 }
 
 body.has-fluid .nav {
-  background: color-mix(in oklab, var(--abyss) 52%, transparent);
+  background: color-mix(in oklab, var(--bg) 56%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
           backdrop-filter: blur(22px) saturate(1.5);
 }
 body.has-fluid .nav.is-stuck {
-  background: color-mix(in oklab, var(--abyss) 74%, transparent);
+  background: color-mix(in oklab, var(--bg) 76%, transparent);
 }
 
 body.has-fluid .foot {
-  background: color-mix(in oklab, var(--abyss) 76%, transparent);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
   -webkit-backdrop-filter: blur(18px);
           backdrop-filter: blur(18px);
-  border-top-color: color-mix(in oklab, var(--lume) 16%, var(--line));
+  border-top-color: color-mix(in oklab, var(--accent) 16%, var(--line));
 }
 
 /* ----------------------------------------------------------------- hero --- */
@@ -84,23 +88,23 @@ body.has-fluid .hero__grid > div:first-child {
 body.has-fluid .hero__grid > div:first-child::before {
   content: '';
   position: absolute;
-  inset: -8% -12% -8% -50%;
+  inset: -8% 0 -8% -50%;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(72% 62% at 28% 45%,
-              color-mix(in oklab, var(--abyss) 88%, transparent) 0%,
-              color-mix(in oklab, var(--abyss) 62%, transparent) 46%,
-              transparent 78%);
+  background: radial-gradient(84% 70% at 30% 45%,
+              color-mix(in oklab, var(--bg) 88%, transparent) 0%,
+              color-mix(in oklab, var(--bg) 62%, transparent) 48%,
+              transparent 80%);
 }
 
 body.has-fluid .hero__eyebrow {
-  background: color-mix(in oklab, var(--abyss) 68%, transparent);
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
   -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
-  border-color: color-mix(in oklab, var(--lume) 26%, var(--line-strong));
+  border-color: color-mix(in oklab, var(--accent) 26%, var(--line-strong));
 }
 
-body.has-fluid .hero__stats { border-top-color: color-mix(in oklab, var(--lume) 20%, var(--line)); }
+body.has-fluid .hero__stats { border-top-color: color-mix(in oklab, var(--accent) 20%, var(--line)); }
 
 /* ---------------------------------------------------------------- glass --- */
 
@@ -116,31 +120,42 @@ body.has-fluid .trust__item,
 body.has-fluid .pdp__stage,
 body.has-fluid .search-pop,
 body.has-fluid .toast {
-  background: color-mix(in oklab, var(--trench) 82%, transparent);
+  background: color-mix(in oklab, var(--surface) 84%, transparent);
   -webkit-backdrop-filter: blur(16px) saturate(1.25);
           backdrop-filter: blur(16px) saturate(1.25);
-  border-color: color-mix(in oklab, var(--lume) 12%, var(--line));
+  border-color: color-mix(in oklab, var(--accent) 12%, var(--line));
 }
 
 body.has-fluid .card:hover,
 body.has-fluid .svc:hover,
 body.has-fluid .cat:hover {
-  border-color: color-mix(in oklab, var(--lume) 42%, var(--line-strong));
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--line-strong));
   box-shadow: 0 32px 80px -28px rgb(0 0 0 / .8),
-              0 0 0 1px color-mix(in oklab, var(--lume) 18%, transparent);
+              0 0 0 1px color-mix(in oklab, var(--accent) 18%, transparent);
 }
 
 /* The media well inside a card should read as a window onto the ground. */
 body.has-fluid .card__media {
   background: linear-gradient(160deg,
-              color-mix(in oklab, var(--abyss) 46%, transparent),
-              color-mix(in oklab, var(--deep) 62%, transparent));
+              color-mix(in oklab, var(--bg) 46%, transparent),
+              color-mix(in oklab, var(--bg-raised) 62%, transparent));
+}
+
+/* Photo tiles keep their light plate. Same specificity as the rule above, so
+   this has to come AFTER it to win on source order — the shots are on white and
+   the image multiplies against this plate. */
+body.has-fluid .card__media--photo,
+body.has-fluid .pdp__stage--photo {
+  background: linear-gradient(168deg, #FFFFFF 0%, #F4F1EA 100%);
+  -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+  border-color: color-mix(in oklab, var(--ink) 12%, transparent);
 }
 
 /* Drawers sit above the fluid and must be fully legible — no transparency
    games where someone is reading a total. */
 body.has-fluid dialog.drawer {
-  background: color-mix(in oklab, var(--deep) 96%, transparent);
+  background: color-mix(in oklab, var(--bg-raised) 96%, transparent);
   -webkit-backdrop-filter: blur(24px);
           backdrop-filter: blur(24px);
 }
@@ -154,7 +169,7 @@ body.has-fluid .track__copy > .panel {
   margin: calc(var(--sp-5) * -1);
   border-radius: var(--r-4);
   background: radial-gradient(88% 88% at 20% 40%,
-              color-mix(in oklab, var(--abyss) 84%, transparent),
+              color-mix(in oklab, var(--bg) 84%, transparent),
               transparent 82%);
 }
 
@@ -174,29 +189,55 @@ body.has-fluid .page-head::before,
 body.has-fluid .section__head::before {
   content: '';
   position: absolute;
-  inset: -18% -14% -22% -8%;
+  inset: -18% 0 -22% -8%;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(64% 78% at 22% 50%,
-              color-mix(in oklab, var(--abyss) 86%, transparent) 0%,
-              color-mix(in oklab, var(--abyss) 54%, transparent) 52%,
-              transparent 80%);
+  background: radial-gradient(78% 86% at 20% 50%,
+              color-mix(in oklab, var(--bg) 86%, transparent) 0%,
+              color-mix(in oklab, var(--bg) 54%, transparent) 54%,
+              transparent 82%);
+}
+
+/* ------------------------------------------------- adaptive text contrast --- */
+
+/* `on-light` is toggled by contrast.js when the fluid behind an element gets
+   bright enough that light text would stop being readable. The transition is
+   deliberately slow and eased: the fluid moves continuously, so a hard swap
+   reads as a glitch while a 400ms fade reads as the type responding to it.
+   Colour is a token, not a literal, so this works in both themes — in dark mode
+   the flip is white -> near-black, in light mode near-black -> white. */
+body.has-fluid [data-adaptive] {
+  transition: color var(--t-slow) var(--e-quiet);
+}
+body.has-fluid [data-adaptive].on-light,
+body.has-fluid [data-adaptive].on-light .lume {
+  color: var(--ink);
+}
+:root[data-theme='light'] body.has-fluid [data-adaptive].on-light,
+:root[data-theme='light'] body.has-fluid [data-adaptive].on-light .lume {
+  color: #FFFFFF;
+  text-shadow: 0 1px 14px color-mix(in oklab, var(--ink) 45%, transparent);
+}
+
+/* The accent word in the hero keeps its colour until the ground actually
+   threatens it, then goes solid so it never sits teal-on-teal. */
+body.has-fluid .hero__title.on-light .lume { color: var(--lume-900); }
+:root[data-theme='light'] body.has-fluid .hero__title.on-light .lume { color: var(--lume-100); }
+
+@media (prefers-reduced-motion: reduce) {
+  body.has-fluid [data-adaptive] { transition: none; }
 }
 
 /* Spec rows on a product page are long, thin and low-contrast by design. */
-body.has-fluid .spec { border-bottom-color: color-mix(in oklab, var(--lume) 10%, var(--line)); }
+body.has-fluid .spec { border-bottom-color: color-mix(in oklab, var(--accent) 10%, var(--line)); }
 
 /* --------------------------------------------------------------- accents --- */
 
 /* The primary action has to out-glow the ground, or on a bright plume the CTA
    stops looking like the brightest thing on screen. */
 body.has-fluid .btn--primary {
-  box-shadow: 0 18px 50px -16px color-mix(in oklab, var(--lume) 72%, transparent),
-              0 0 0 1px color-mix(in oklab, var(--lume-100) 26%, transparent);
-}
-
-body.has-fluid .progress {
-  box-shadow: 0 0 12px color-mix(in oklab, var(--lume) 80%, transparent);
+  box-shadow: 0 18px 50px -16px color-mix(in oklab, var(--accent) 72%, transparent),
+              0 0 0 1px color-mix(in oklab, var(--accent) 26%, transparent);
 }
 
 /* ---------------------------------------------------------- degradation --- */
@@ -214,12 +255,12 @@ body.has-fluid .progress {
   body.has-fluid .toast,
   body.has-fluid .nav,
   body.has-fluid .marquee,
-  body.has-fluid .foot { background: var(--trench); }
-  body.has-fluid dialog.drawer { background: var(--deep); }
+  body.has-fluid .foot { background: var(--surface); }
+  body.has-fluid dialog.drawer { background: var(--bg-raised); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* The sim never starts under reduce, so has-fluid is never added and the
-     gradient below is what shows. Stated explicitly so it cannot regress. */
-  #fluid { background: var(--abyss); }
+     element's own background is what shows. Stated so it cannot regress. */
+  #fluid { background: var(--bg); }
 }

@@ -63,12 +63,16 @@ uniform float aspectRatio;
 uniform vec3 color;
 uniform vec2 point;
 uniform float radius;
+uniform float tag;
 void main () {
   vec2 p = vUv - point.xy;
   p.x *= aspectRatio;                       /* keep the blob round, not oval */
-  vec3 splat = exp(-dot(p, p) / radius) * color;
-  vec3 base = texture2D(uTarget, vUv).xyz;
-  gl_FragColor = vec4(base + splat, 1.0);
+  float g = exp(-dot(p, p) / radius);
+  vec4 base = texture2D(uTarget, vUv);
+  /* Alpha is unused by the solver, so it carries a tag instead: 1 for a landing
+     plume, 0 for ambient and pointer dye. The tag advects along with the dye it
+     belongs to, which is what lets the two decay at different rates. */
+  gl_FragColor = vec4(base.rgb + g * color, min(1.0, base.a + g * tag));
 }`;
 
 /* MANUAL_FILTERING is prepended when the platform cannot linearly filter the
@@ -113,8 +117,12 @@ void main () {
      landing plume, which must clear or every splash lingers for ten seconds.
      Squaring the luminance sharpens the split: ambient sits near 0.1 (0.01 after
      squaring, so barely touched) while a plume peaks above 1.0 and is hit hard. */
-  float lum = max(result.r, max(result.g, result.b));
-  result -= result * clamp(brightDecay * lum * lum * dt, 0.0, 0.9);
+  /* Tagged (plume) dye is cleared aggressively; ambient dye has tag 0 and is
+     untouched. This is what lets a landing splash disappear in about a second
+     while the background field persists for tens of seconds. */
+  result.rgb -= result.rgb * clamp(brightDecay * result.a * dt, 0.0, 0.92);
+  result.a /= 1.0 + 1.6 * dt;      /* the tag itself fades, so dye left behind
+                                      settles into the ambient field */
 
   /* Half-float division is asymptotic: dye parks around 1e-4 and never reaches
      zero, leaving a permanent haze over the whole ground. Subtract an absolute
@@ -250,12 +258,24 @@ varying vec2 vUv;
 uniform sampler2D uTexture;
 uniform float uIntensity;
 uniform vec3 uGround;
+uniform float uLight;      /* 0 = dark ground, 1 = light ground */
 void main () {
   vec3 dye = texture2D(uTexture, vUv).rgb * uIntensity;
-  /* Screen-blend the dye over the ground: keeps highlights from clipping to
-     flat white the way plain addition does. */
-  vec3 c = 1.0 - (1.0 - uGround) * (1.0 - clamp(dye, 0.0, 1.0));
-  gl_FragColor = vec4(c, 1.0);
+  vec3 d = clamp(dye, 0.0, 1.0);
+  float a = clamp(max(d.r, max(d.g, d.b)), 0.0, 1.0);
+
+  /* Dark ground: screen blend. Dye ADDS light, and screen keeps highlights from
+     clipping to flat white the way plain addition does. */
+  vec3 onDark = 1.0 - (1.0 - uGround) * (1.0 - d);
+
+  /* Light ground: screen blend would be a no-op on near-white, so dye has to
+     SUBTRACT instead — ink soaking into paper. Normalising by the dye's own
+     luminance recovers its hue, which is then laid over the ground at 62%
+     value so it reads as saturated pigment rather than grey. */
+  vec3 hue = d / max(a, 1e-4);
+  vec3 onLight = mix(uGround, hue * 0.62, a * 0.92);
+
+  gl_FragColor = vec4(mix(onDark, onLight, uLight), 1.0);
 }`;
 
 /* ---------------------------------------------------------------- utilities */
@@ -324,7 +344,7 @@ const DESKTOP = {
   splatRadius: 0.14, splatForce: 3000, intensity: 1.45, maxDpr: 1.5,
   ambient: 2.0,           /* emitters per second, 0 disables */
   timeScale: 0.5,
-  brightDecay: 6,         /* extra decay on bright dye — clears plumes */
+  plumeDecay: 5.5,        /* how fast tagged plume dye clears */
 };
 const MOBILE = {
   simRes: 96, dyeRes: 512, pressureIters: 12,
@@ -332,7 +352,7 @@ const MOBILE = {
   splatRadius: 0.17, splatForce: 2600, intensity: 1.35, maxDpr: 1,
   ambient: 1.5,
   timeScale: 0.5,
-  brightDecay: 7,
+  plumeDecay: 6.5,
 };
 
 /**
@@ -411,7 +431,15 @@ export function createFluid(canvas, opts = {}) {
   const isMobile = innerWidth < 820 || lowPower;
   const cfg = { ...(isMobile ? MOBILE : DESKTOP), ...opts };
   const palette = (opts.palette || ['#2FD6B4', '#FF9F45', '#7FEFD8']).map(hexToRgb);
-  const ground = hexToRgb(opts.ground || '#04070C');
+  let ground = hexToRgb(opts.ground || '#04070C');
+  let lightMode = false;
+
+  /* The theme toggle repoints the ground rather than tearing the sim down, so
+     switching themes keeps the existing dye and does not restart the field. */
+  function setGround(hex, isLight) {
+    ground = hexToRgb(hex);
+    lightMode = !!isLight;
+  }
 
   /* --- geometry: one full-screen triangle pair, drawn for every pass --- */
   const quad = gl.createBuffer();
@@ -488,6 +516,17 @@ export function createFluid(canvas, opts = {}) {
 
   const filtering = supportLinear ? gl.LINEAR : gl.NEAREST;
   let dye, velocity, divergenceFBO, curlFBO, pressure;
+
+  /* A postage-stamp copy of what the display pass actually paints, kept on the
+     CPU so the page can ask "how bright is the ground behind this text?".
+     40x24 is enough to place a headline; readPixels is a GPU stall so it runs
+     at 12Hz, not per frame. RGBA8 because readPixels on a half-float target is
+     not portable. */
+  const SAMPLE_W = 40, SAMPLE_H = 24;
+  let sampleFBO = null;
+  const sampleBuf = new Uint8Array(SAMPLE_W * SAMPLE_H * 4);
+  const lumGrid = new Float32Array(SAMPLE_W * SAMPLE_H);
+  let sampleAccum = 0;
   let simW, simH, dyeW, dyeH;
 
   function resolution(target) {
@@ -508,6 +547,57 @@ export function createFluid(canvas, opts = {}) {
     divergenceFBO = makeFBO(simW, simH, formatR, halfFloat, gl.NEAREST);
     curlFBO = makeFBO(simW, simH, formatR, halfFloat, gl.NEAREST);
     pressure = makeDouble(simW, simH, formatR, halfFloat, gl.NEAREST);
+    sampleFBO = makeFBO(SAMPLE_W, SAMPLE_H,
+                        { internal: isWebGL2 ? gl.RGBA8 : gl.RGBA, format: gl.RGBA },
+                        gl.UNSIGNED_BYTE, gl.NEAREST);
+  }
+
+  /* Render the display pass into the stamp and pull it back to the CPU. */
+  function sampleGround() {
+    if (!sampleFBO) return;
+    use(P.display);
+    gl.uniform1i(P.display.uniforms.uTexture, dye.read.attach(0));
+    gl.uniform1f(P.display.uniforms.uIntensity, cfg.intensity);
+    gl.uniform3f(P.display.uniforms.uGround, ground[0], ground[1], ground[2]);
+    gl.uniform1f(P.display.uniforms.uLight, lightMode ? 1 : 0);
+    blit(sampleFBO);
+    gl.readPixels(0, 0, SAMPLE_W, SAMPLE_H, gl.RGBA, gl.UNSIGNED_BYTE, sampleBuf);
+    for (let i = 0, n = SAMPLE_W * SAMPLE_H; i < n; i++) {
+      const o = i * 4;
+      /* Rec.709 relative luminance, which is what decides whether dark or light
+         text will read against it. */
+      lumGrid[i] = (0.2126 * sampleBuf[o] + 0.7152 * sampleBuf[o + 1] + 0.0722 * sampleBuf[o + 2]) / 255;
+    }
+  }
+
+  /**
+   * Ground luminance (0..1) at a normalised viewport point.
+   * @param nx 0..1 from the LEFT
+   * @param ny 0..1 from the TOP — DOM convention, flipped internally
+   */
+  function luminanceAt(nx, ny) {
+    const x = Math.min(SAMPLE_W - 1, Math.max(0, Math.round(nx * (SAMPLE_W - 1))));
+    const yFlipped = 1 - ny;
+    const y = Math.min(SAMPLE_H - 1, Math.max(0, Math.round(yFlipped * (SAMPLE_H - 1))));
+    return lumGrid[y * SAMPLE_W + x];
+  }
+
+  /** Peak ground luminance under a DOM rect — the worst case for text on it. */
+  function peakLuminanceIn(rect) {
+    const vw = canvas.clientWidth || innerWidth;
+    const vh = canvas.clientHeight || innerHeight;
+    let peak = 0;
+    const steps = 5;
+    for (let i = 0; i <= steps; i++) {
+      for (let j = 0; j <= 2; j++) {
+        const nx = (rect.left + (rect.width * i) / steps) / vw;
+        const ny = (rect.top + (rect.height * j) / 2) / vh;
+        if (nx < 0 || nx > 1 || ny < 0 || ny > 1) continue;
+        const l = luminanceAt(nx, ny);
+        if (l > peak) peak = l;
+      }
+    }
+    return peak;
   }
 
   /* --------------------------------------------------------------- plumbing */
@@ -631,7 +721,7 @@ export function createFluid(canvas, opts = {}) {
     gl.uniform1i(P.advectDye.uniforms.uSource, dye.read.attach(1));
     gl.uniform1f(P.advectDye.uniforms.dt, dt);
     gl.uniform1f(P.advectDye.uniforms.dissipation, cfg.densityDissipation);
-    gl.uniform1f(P.advectDye.uniforms.brightDecay, cfg.brightDecay);
+    gl.uniform1f(P.advectDye.uniforms.brightDecay, cfg.plumeDecay);
     blit(dye.write);
     dye.swap();
   }
@@ -646,6 +736,7 @@ export function createFluid(canvas, opts = {}) {
     gl.uniform1i(P.display.uniforms.uTexture, dye.read.attach(0));
     gl.uniform1f(P.display.uniforms.uIntensity, cfg.intensity);
     gl.uniform3f(P.display.uniforms.uGround, ground[0], ground[1], ground[2]);
+    gl.uniform1f(P.display.uniforms.uLight, lightMode ? 1 : 0);
     blit(null);
   }
 
@@ -660,7 +751,7 @@ export function createFluid(canvas, opts = {}) {
    * @param color [r,g,b] 0..1
    * @param radiusScale multiplier on cfg.splatRadius
    */
-  function splat(x, y, dx, dy, color, radiusScale = 1) {
+  function splat(x, y, dx, dy, color, radiusScale = 1, tag = 0) {
     const ar = canvas.width / canvas.height;
     use(P.splat);
     gl.uniform1i(P.splat.uniforms.uTarget, velocity.read.attach(0));
@@ -668,10 +759,12 @@ export function createFluid(canvas, opts = {}) {
     gl.uniform2f(P.splat.uniforms.point, x, y);
     gl.uniform3f(P.splat.uniforms.color, dx, dy, 0);
     gl.uniform1f(P.splat.uniforms.radius, correctRadius(cfg.splatRadius / 100 * radiusScale, ar));
+    gl.uniform1f(P.splat.uniforms.tag, 0);          /* velocity has no tag */
     blit(velocity.write);
     velocity.swap();
 
     gl.uniform1i(P.splat.uniforms.uTarget, dye.read.attach(0));
+    gl.uniform1f(P.splat.uniforms.tag, tag);
     gl.uniform3f(P.splat.uniforms.color, color[0], color[1], color[2]);
     blit(dye.write);
     dye.swap();
@@ -717,7 +810,7 @@ export function createFluid(canvas, opts = {}) {
     for (let i = 0; i < queue.length && budget > 0; ) {
       const s = queue[i];
       if (s.wait > 0) { s.wait--; i++; continue; }
-      splat(s.x, s.y, s.dx, s.dy, s.color, s.rs);
+      splat(s.x, s.y, s.dx, s.dy, s.color, s.rs, s.tag || 0);
       queue.splice(i, 1);
       budget--;
     }
@@ -776,6 +869,7 @@ export function createFluid(canvas, opts = {}) {
         dy: up * 950,                          /* positive = up */
         color: plumeColor(s, 0.35),
         rs: 0.45 + 0.18 * rand(),
+        tag: 1,
       });
     }
 
@@ -788,6 +882,7 @@ export function createFluid(canvas, opts = {}) {
       dy: 1650 * energy,
       color: plumeColor(0, 0.15),
       rs: 0.34,
+      tag: 1,
     });
   }
 
@@ -845,6 +940,8 @@ export function createFluid(canvas, opts = {}) {
     drainQueue();
     step(dt * cfg.timeScale); /* physics runs slow */
     render();
+    sampleAccum += dt;
+    if (sampleAccum > 1 / 12) { sampleAccum = 0; sampleGround(); }
     raf = requestAnimationFrame(frame);
   }
 
@@ -863,6 +960,7 @@ export function createFluid(canvas, opts = {}) {
     drainQueue();
     step(Math.min(dt, 1 / 30) * cfg.timeScale);
     render();
+    sampleGround();
   }
   function pause() {
     running = false;
@@ -904,7 +1002,8 @@ export function createFluid(canvas, opts = {}) {
 
   return {
     supported: true, isWebGL2, supportLinear, config: cfg,
-    splat, plume, plumeUnder, pointerAt, resize, pause, resume, destroy, seed, tick,
+    splat, plume, plumeUnder, pointerAt, resize, pause, resume, destroy, seed, tick, setGround,
+    luminanceAt, peakLuminanceIn,
     get running() { return running; },
     stats: () => ({ simW, simH, dyeW, dyeH, dpr, queued: queue.length }),
   };

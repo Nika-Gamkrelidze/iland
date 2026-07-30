@@ -9,6 +9,7 @@ import { deviceSVG } from './devices.js';
 import { UI, TICKER, STORY } from './i18n.js';
 import { createFluid } from './fluid.js';
 import { createChoreography } from './fx.js';
+import { createContrast } from './contrast.js';
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -49,6 +50,25 @@ const icon = (name, size = 20) =>
         aria-hidden="true">${ICON[name] || ''}</svg>`;
 
 /* ------------------------------------------------------------- components */
+
+/**
+ * Product imagery. Real photographs from iland.ge where we have them, the
+ * parametric SVG otherwise — so a product added in the CMS with no photo still
+ * renders something rather than an empty box.
+ *
+ * The photo is a single fixed finish, so each product's colour list is ordered
+ * to put the finish actually pictured first. Picking another swatch still
+ * changes the variant and the price; it does not repaint the photograph, which
+ * is how every reseller with one shot per product behaves.
+ */
+function productMedia(p, { hex, className = '', eager = false } = {}) {
+  if (p.image) {
+    return `<img src="${esc(p.image)}" alt="${esc(p.name)}" class="${esc(className)} product-photo"
+                 loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
+  }
+  return deviceSVG(p.device, hex || p.colors?.[0]?.hex || '#C2BCB2',
+                   { className, ariaLabel: p.name });
+}
 
 /** The stock pill, using the shop's own phrasing. */
 function stockPill(p) {
@@ -93,8 +113,8 @@ function productCard(p) {
     <div class="card__badges">${badgeFor(p)}</div>
     <button class="card__fav" aria-pressed="false" aria-label="ფავორიტებში დამატება"
             data-fav="${esc(p.id)}">${icon('heart', 15)}</button>
-    <div class="card__media" data-media="${esc(p.id)}">
-      ${deviceSVG(p.device, color)}
+    <div class="card__media${p.image ? ' card__media--photo' : ''}" data-media="${esc(p.id)}">
+      ${productMedia(p, { hex: color })}
     </div>
     <h3 class="card__name">${esc(p.name)}</h3>
     <p class="card__tag">${esc(tt(p.tagline))}</p>
@@ -165,8 +185,8 @@ function viewHome() {
     <div class="wrap hero__grid">
       <div>
         <p class="hero__eyebrow"><span class="dot"></span>${esc(u('heroEyebrow'))}</p>
-        <h1 class="hero__title display">${esc(u('heroTitleA'))}<span class="lume">${esc(u('heroTitleB'))}</span></h1>
-        <p class="hero__lede">${esc(u('heroLede'))}</p>
+        <h1 class="hero__title display" data-adaptive>${esc(u('heroTitleA'))}<span class="lume">${esc(u('heroTitleB'))}</span></h1>
+        <p class="hero__lede" data-adaptive>${esc(u('heroLede'))}</p>
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg btn--magnetic" href="#/c/iphone">${esc(u('shopNow'))} ${icon('arrow', 17)}</a>
           <a class="btn btn--ghost btn--lg" href="#/service">${esc(u('bookRepair'))}</a>
@@ -190,7 +210,7 @@ function viewHome() {
     <div class="section__head">
       <div>
         <p class="eyebrow">${esc(u('browse'))}</p>
-        <h2 class="section__title">${esc(u('browseSub'))}</h2>
+        <h2 class="section__title" data-adaptive>${esc(u('browseSub'))}</h2>
       </div>
     </div>
     <div class="grid">
@@ -214,7 +234,7 @@ function viewHome() {
     <div class="section__head">
       <div>
         <p class="eyebrow">${esc(u('featured'))}</p>
-        <h2 class="section__title">${esc(u('featuredSub'))}</h2>
+        <h2 class="section__title" data-adaptive>${esc(u('featuredSub'))}</h2>
       </div>
       <a class="btn btn--ghost btn--sm" href="#/c/iphone">${esc(u('seeAll'))} ${icon('arrow', 15)}</a>
     </div>
@@ -251,7 +271,7 @@ function viewHome() {
     <div class="section__head">
       <div>
         <p class="eyebrow">${esc(u('deals'))}</p>
-        <h2 class="section__title">${esc(u('dealsSub'))}</h2>
+        <h2 class="section__title" data-adaptive>${esc(u('dealsSub'))}</h2>
       </div>
     </div>
     <div class="rail">${S.onSale().slice(0, 8).map(productCard).join('')}</div>
@@ -262,7 +282,7 @@ function viewHome() {
     <div class="section__head">
       <div>
         <p class="eyebrow">${esc(S.t(S.getState().categories.find(c => c.id === 'service')))}</p>
-        <h2 class="section__title">${esc(u('serviceTitle'))}</h2>
+        <h2 class="section__title" data-adaptive>${esc(u('serviceTitle'))}</h2>
         <p class="section__sub mt-3">${esc(u('serviceSub'))}</p>
       </div>
       <a class="btn btn--ghost btn--sm" href="#/service">${esc(u('seeAll'))} ${icon('arrow', 15)}</a>
@@ -300,7 +320,7 @@ function viewCategory(catId) {
   <section class="section wrap">
     <header class="page-head">
       <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
-      <h1 class="section__title mt-3" style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
+      <h1 class="section__title mt-3" data-adaptive style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
     </header>
     <div class="flex wrap-flex gap-2 mt-5" id="sortRow">
       <button class="chip is-on" data-sort="popular">${esc(u('sortPopular'))}</button>
@@ -331,9 +351,9 @@ function viewProduct(id) {
     <div>
       <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> ·
         <a href="#/c/${esc(p.category)}">${esc(S.t(cat))}</a></p>
-      <div class="pdp__stage mt-4" id="pdpStage">
+      <div class="pdp__stage${p.image ? ' pdp__stage--photo' : ''} mt-4" id="pdpStage">
         <div class="stage__glow" aria-hidden="true"></div>
-        ${deviceSVG(p.device, color, { ariaLabel: p.name })}
+        ${productMedia(p, { hex: color, eager: true })}
       </div>
       <div class="mt-6">
         <h2 class="section__title" style="font-size:var(--step-2)">${esc(u('specs'))}</h2>
@@ -395,7 +415,7 @@ function viewProduct(id) {
   </section>
 
   <section class="section wrap" data-reveal>
-    <div class="section__head"><h2 class="section__title">${esc(u('alsoBought'))}</h2></div>
+    <div class="section__head"><h2 class="section__title" data-adaptive>${esc(u('alsoBought'))}</h2></div>
     <div class="rail">${cross.map(productCard).join('')}</div>
   </section>`;
 }
@@ -408,8 +428,8 @@ function viewService() {
     <div class="grain" aria-hidden="true"></div>
     <div class="wrap">
       <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(st.categories.find(c => c.id === 'service')))}</p>
-      <h1 class="hero__title display mt-4" style="font-size:var(--step-5)">${esc(u('serviceTitle'))}</h1>
-      <p class="hero__lede">${esc(u('serviceSub'))}</p>
+      <h1 class="hero__title display mt-4" data-adaptive style="font-size:var(--step-5)">${esc(u('serviceTitle'))}</h1>
+      <p class="hero__lede" data-adaptive>${esc(u('serviceSub'))}</p>
     </div>
   </section>
   <section class="section wrap" style="padding-top:0">
@@ -444,6 +464,7 @@ function paint() {
   /* Synchronous, before the browser paints: arming the cards a task later would
      show them at rest and then snap them up to the pre-fall offset. */
   choreo?.attach(main);
+  contrast?.attach(main);
 }
 
 /** View Transitions make the card → PDP change feel like one continuous object. */
@@ -485,7 +506,7 @@ function wireView(r) {
     const [id, hex] = b.dataset.swatch.split('|');
     const p = S.byId(id);
     const media = $(`[data-media="${CSS.escape(id)}"]`);
-    if (p && media) media.innerHTML = deviceSVG(p.device, hex);
+    if (p && media && !p.image) media.innerHTML = deviceSVG(p.device, hex);
     b.closest('.card__swatches')?.querySelectorAll('.swatch')
       .forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   }));
@@ -548,11 +569,13 @@ function wirePDP(id) {
     $$('#colorRow .swatch').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     color = b.dataset.color;
     $('#colorHint').textContent = b.dataset.cname;
-    const stage = $('#pdpStage');
-    const glow = stage.querySelector('.stage__glow');
-    stage.innerHTML = '';
-    stage.appendChild(glow);
-    stage.insertAdjacentHTML('beforeend', deviceSVG(p.device, color, { ariaLabel: p.name }));
+    if (!p.image) {
+      const stage = $('#pdpStage');
+      const glow = stage.querySelector('.stage__glow');
+      stage.innerHTML = '';
+      stage.appendChild(glow);
+      stage.insertAdjacentHTML('beforeend', deviceSVG(p.device, color, { ariaLabel: p.name }));
+    }
   }));
 
   $('#addBtn')?.addEventListener('click', () => {
@@ -862,7 +885,9 @@ function renderCart() {
     const hex = p?.colors?.find(c => c.id === l.color)?.hex || l.color || '#7D7E80';
     return `
     <div class="line-item">
-      <div class="line-item__media">${deviceSVG(l.device, hex)}</div>
+      <div class="line-item__media">${p?.image
+        ? `<img src="${esc(p.image)}" alt="" loading="lazy" decoding="async">`
+        : deviceSVG(l.device, hex)}</div>
       <div>
         <p class="line-item__name">${esc(l.name)}</p>
         <p class="line-item__meta">${esc(l.storage)} · <span class="num">${esc(S.gel(l.price))}</span></p>
@@ -1021,14 +1046,13 @@ function applyTheme() {
   const th = S.getTheme();
   document.documentElement.dataset.theme = th;
 
-  /* The fluid is a dark-mode device: on the sand ground it would have to fight
-     the page and lose. So light mode drops the class (which also switches the
-     glass surfaces back to solid — they are tinted with dark palette tokens)
-     and stops the sim entirely rather than rendering something nobody sees. */
+  /* The fluid runs in both themes. It cannot simply be recoloured, though:
+     on a light ground, screen-blending dye over near-white is a no-op, so the
+     display pass switches to subtractive ink-on-paper compositing. */
   if (fluid) {
-    const on = th === 'dark';
-    document.body.classList.toggle('has-fluid', on);
-    if (on) fluid.resume(); else fluid.pause();
+    document.body.classList.add('has-fluid');
+    fluid.setGround(th === 'dark' ? '#04070C' : '#FBFAF7', th !== 'dark');
+    fluid.resume();
   }
   $('#themeIcon').innerHTML = th === 'dark'
     ? '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'
@@ -1092,7 +1116,7 @@ function wireChrome() {
     if (!input.value.trim()) { res.innerHTML = ''; return; }
     res.innerHTML = hits.length
       ? hits.map(p => `<button data-go="${esc(p.id)}">
-          ${deviceSVG(p.device, p.colors?.[0]?.hex || '#7D7E80')}
+          ${productMedia(p)}
           <span><b style="display:block;font-size:var(--step--1)">${esc(p.name)}</b>
           <span class="dim num" style="font-size:var(--step--2)">${esc(S.gel(S.priceOf(p).final))}</span></span>
         </button>`).join('')
@@ -1122,6 +1146,7 @@ function wireChrome() {
 
 let fluid = null;
 let choreo = null;
+let contrast = null;
 
 function bootFluid() {
   const canvas = $('#fluid');
@@ -1160,10 +1185,11 @@ function bootFluid() {
   }, { passive: true });
 
   choreo = createChoreography(fluid);
+  contrast = createContrast(fluid);
 
   /* Debug handle: lets the fluid be inspected and driven from the console
      without shipping a GUI. Read-only from the site's point of view. */
-  window.iLand = { fluid, choreo };
+  window.iLand = { fluid, choreo, contrast };
 }
 
 function boot() {

@@ -1189,20 +1189,6 @@ dialog.drawer[open]::backdrop {
 }
 @keyframes rise { from { opacity: 0; translate: 0 26px; } to { opacity: 1; translate: 0 0; } }
 
-/* Scroll progress bar, compositor-driven, no listeners. */
-.progress {
-  position: fixed;
-  inset: 0 0 auto 0;
-  height: 2px;
-  z-index: calc(var(--z-nav) + 1);
-  background: var(--accent);
-  transform-origin: 0 50%;
-  scale: 0 1;
-}
-@supports (animation-timeline: scroll()) {
-  .progress { animation: grow linear both; animation-timeline: scroll(root block); }
-}
-@keyframes grow { to { scale: 1 1; } }
 
 /* ------------------------------------------------------------ pinned story --- */
 
@@ -1346,3 +1332,52 @@ dialog.drawer--left[open] { translate: 0 0; }
 @media (min-width: 60.001rem) {
   dialog.drawer--left { display: none; }
 }
+
+/* ----------------------------------------------------------- product art --- */
+
+/* Real photographs from the client's catalogue sit in the same wells as the
+   drawn fallbacks, so both have to obey the same box. `contain` because these
+   are product shots of wildly different aspect ratios — a MacBook is landscape,
+   an iPhone is portrait — and cropping either would cut off the product. */
+.product-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.card__media .product-photo { padding: 8%; }
+.pdp__stage .product-photo { padding: 10%; }
+.line-item__media .product-photo { padding: 12%; }
+.search-res .product-photo { width: 34px; height: 34px; flex: none; }
+
+/* The client's photos are all shot on white. Rather than fight that with a
+   blend mode — `screen` keeps white white, `multiply` eats the product — the
+   white is made deliberate: the media well becomes a light product tile, which
+   is how Apple resellers present these anyway. The tile is slightly warm rather
+   than pure #fff so it sits in the palette instead of glaring out of it. */
+.card__media--photo,
+.pdp__stage--photo {
+  background: linear-gradient(168deg, #FFFFFF 0%, #F4F1EA 100%);
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+}
+.card__media--photo .product-photo,
+.pdp__stage--photo .product-photo { mix-blend-mode: multiply; }
+
+/* Badges and the favourite button are painted OVER the light tile, and they sit
+   before it in the DOM so no sibling selector reaches them — hence :has() on the
+   card. Their default translucent-accent fill has almost no contrast on white. */
+.card:has(.card__media--photo) .badge--new {
+  background: var(--lume-900);
+  color: var(--lume-100);
+}
+.card:has(.card__media--photo) .badge--demo {
+  background: #FFFFFFEE;
+  color: var(--ink);
+  border-color: color-mix(in oklab, var(--ink) 20%, transparent);
+}
+.card:has(.card__media--photo) .card__fav {
+  background: #FFFFFFCC;
+  color: var(--ink-2);
+}
+.card:has(.card__media--photo) .card__fav:hover { color: var(--ink); }

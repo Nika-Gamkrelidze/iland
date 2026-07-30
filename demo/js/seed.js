@@ -74,6 +74,7 @@ export const PRODUCTS = [
   /* ---------------------------------------------------------------- iPhone */
   {
     id: 'iphone-17-pro', sku: 'IP17P', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-17-pro.jpg',
     name: 'iPhone 17 Pro',
     tagline: { ka: 'ტიტანი. A19 Pro. ყოველდღიური ძალა.', en: 'Titanium. A19 Pro. Everyday power.', ru: 'Титан. A19 Pro. Мощность каждый день.' },
     price: 3199, oldPrice: 3779, condition: 'new', badge: 'new', featured: true, rating: 4.9, reviews: 128,
@@ -90,6 +91,7 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-air', sku: 'IPAIR', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-air.png',
     name: 'iPhone Air',
     tagline: { ka: 'ყველაზე თხელი iPhone.', en: 'The thinnest iPhone ever.', ru: 'Самый тонкий iPhone.' },
     price: 2749, oldPrice: 3099, condition: 'new', badge: 'new', featured: true, rating: 4.8, reviews: 74,
@@ -105,11 +107,12 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-17', sku: 'IP17', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-17.jpg',
     name: 'iPhone 17',
     tagline: { ka: 'უფრო ნათელი. უფრო სწრაფი.', en: 'Brighter. Faster.', ru: 'Ярче. Быстрее.' },
     price: 2299, oldPrice: 2599, condition: 'new', badge: 'new', featured: true, rating: 4.8, reviews: 203,
     storage: S(['256GB', 0], ['512GB', 560]),
-    colors: f('teal', 'ultramarine', 'white', 'midnight'),
+    colors: f('ultramarine', 'teal', 'white', 'midnight'),
     stock: 21,
     specs: [
       { ka: 'ეკრანი', en: 'Display', v: '6.3" Super Retina XDR, 120Hz' },
@@ -119,11 +122,12 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-16-pro', sku: 'IP16P', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-16-pro.jpg',
     name: 'iPhone 16 Pro',
     tagline: { ka: 'ტიტანის კორპუსი, Camera Control.', en: 'Titanium body, Camera Control.', ru: 'Титановый корпус, Camera Control.' },
     price: 2549, oldPrice: 3099, condition: 'new', badge: 'sale', rating: 4.9, reviews: 341,
     storage: S(['128GB', 0], ['256GB', 280], ['512GB', 840], ['1TB', 1400]),
-    colors: f('naturalTitanium', 'blueTitanium', 'blackTitanium', 'desertTitanium'),
+    colors: f('desertTitanium', 'naturalTitanium', 'blueTitanium', 'blackTitanium'),
     stock: 9,
     specs: [
       { ka: 'ეკრანი', en: 'Display', v: '6.3" Super Retina XDR, 120Hz' },
@@ -133,11 +137,12 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-16', sku: 'IP16', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-16.jpg',
     name: 'iPhone 16',
     tagline: { ka: 'Apple Intelligence-ისთვის შექმნილი.', en: 'Built for Apple Intelligence.', ru: 'Создан для Apple Intelligence.' },
     price: 1899, oldPrice: 2299, condition: 'new', badge: 'sale', rating: 4.7, reviews: 512,
     storage: S(['128GB', 0], ['256GB', 280], ['512GB', 840]),
-    colors: f('ultramarine', 'teal', 'pink', 'white', 'midnight'),
+    colors: f('midnight', 'ultramarine', 'teal', 'pink', 'white'),
     stock: 34,
     specs: [
       { ka: 'ეკრანი', en: 'Display', v: '6.1" Super Retina XDR' },
@@ -147,6 +152,7 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-15', sku: 'IP15', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-15.jpg',
     name: 'iPhone 15',
     tagline: { ka: 'Dynamic Island. USB-C.', en: 'Dynamic Island. USB-C.', ru: 'Dynamic Island. USB-C.' },
     price: 1369, oldPrice: 1799, condition: 'new', badge: 'sale', featured: true, rating: 4.7, reviews: 890,
@@ -161,6 +167,7 @@ export const PRODUCTS = [
   },
   {
     id: 'iphone-14', sku: 'IP14', category: 'iphone', device: 'iphone',
+    image: 'assets/products/iphone-14.png',
     name: 'iPhone 14',
     tagline: { ka: 'დამტკიცებული კლასიკა.', en: 'A proven classic.', ru: 'Проверенная классика.' },
     price: 1149, oldPrice: 1479, condition: 'demo', badge: 'demo', rating: 4.6, reviews: 402,
@@ -176,6 +183,7 @@ export const PRODUCTS = [
   /* ------------------------------------------------------------------ iPad */
   {
     id: 'ipad-pro-m4', sku: 'IPDPM4', category: 'ipad', device: 'ipad',
+    image: 'assets/products/ipad-pro-m4.jpg',
     name: 'iPad Pro M4',
     tagline: { ka: 'Ultra Retina XDR. წარმოუდგენლად თხელი.', en: 'Ultra Retina XDR. Impossibly thin.', ru: 'Ultra Retina XDR. Невероятно тонкий.' },
     price: 3449, oldPrice: 3899, condition: 'new', badge: 'new', featured: true, rating: 4.9, reviews: 96,
@@ -190,6 +198,7 @@ export const PRODUCTS = [
   },
   {
     id: 'ipad-air-m3', sku: 'IPDAM3', category: 'ipad', device: 'ipad',
+    image: 'assets/products/ipad-air-m3.jpg',
     name: 'iPad Air M3',
     tagline: { ka: 'სერიოზული ძალა, მსუბუქ კორპუსში.', en: 'Serious power, feather light.', ru: 'Серьёзная мощь в лёгком корпусе.' },
     price: 1849, oldPrice: 2149, condition: 'new', badge: 'sale', rating: 4.8, reviews: 154,
@@ -203,11 +212,12 @@ export const PRODUCTS = [
   },
   {
     id: 'ipad-11', sku: 'IPD11', category: 'ipad', device: 'ipad',
+    image: 'assets/products/ipad-11.jpg',
     name: 'iPad',
     tagline: { ka: 'ყველაფერი, რაც გჭირდება.', en: 'Everything you need.', ru: 'Всё, что нужно.' },
     price: 949, oldPrice: 1149, condition: 'new', badge: 'sale', rating: 4.6, reviews: 288,
     storage: S(['128GB', 0], ['256GB', 260]),
-    colors: f('silver', 'skyBlue', 'pink', 'starlight'),
+    colors: f('skyBlue', 'silver', 'pink', 'starlight'),
     stock: 25,
     specs: [{ ka: 'ეკრანი', en: 'Display', v: '11" Liquid Retina' }, { ka: 'ჩიპი', en: 'Chip', v: 'A16' }],
   },
@@ -215,6 +225,7 @@ export const PRODUCTS = [
   /* ------------------------------------------------------------------- Mac */
   {
     id: 'macbook-pro-14', sku: 'MBP14', category: 'mac', device: 'macbook',
+    image: 'assets/products/macbook-pro-14.jpg',
     name: 'MacBook Pro 14"',
     tagline: { ka: 'M4 Pro. სამუშაო, რომელიც არ ჩერდება.', en: 'M4 Pro. Work that never stalls.', ru: 'M4 Pro. Работа без остановок.' },
     price: 4779, oldPrice: 5499, condition: 'new', badge: 'sale', featured: true, rating: 4.9, reviews: 167,
@@ -230,11 +241,12 @@ export const PRODUCTS = [
   },
   {
     id: 'macbook-air-15', sku: 'MBA15', category: 'mac', device: 'macbook',
+    image: 'assets/products/macbook-air-15.jpg',
     name: 'MacBook Air 15"',
     tagline: { ka: 'დიდი ეკრანი. 1.5 კგ.', en: 'Big screen. 1.5 kg.', ru: 'Большой экран. 1,5 кг.' },
     price: 2649, oldPrice: 2999, condition: 'new', badge: 'bestseller', featured: true, rating: 4.9, reviews: 431,
     storage: S(['256GB', 0], ['512GB', 560], ['1TB', 1120]),
-    colors: f('midnight', 'starlight', 'skyBlue', 'silver'),
+    colors: f('silver', 'midnight', 'starlight', 'skyBlue'),
     stock: 16,
     specs: [
       { ka: 'ეკრანი', en: 'Display', v: '15.3" Liquid Retina' },
@@ -245,6 +257,7 @@ export const PRODUCTS = [
   },
   {
     id: 'imac-24', sku: 'IMAC24', category: 'mac', device: 'imac',
+    image: 'assets/products/imac-24.jpg',
     name: 'iMac 24"',
     tagline: { ka: 'ფერადი. სრულყოფილი. ერთ ცალში.', en: 'Colourful. Complete. All in one.', ru: 'Яркий. Цельный. Всё в одном.' },
     price: 4249, oldPrice: 4979, condition: 'new', badge: 'sale', rating: 4.8, reviews: 89,
@@ -258,6 +271,7 @@ export const PRODUCTS = [
   },
   {
     id: 'mac-mini-m4', sku: 'MMINI', category: 'mac', device: 'macmini',
+    image: 'assets/products/mac-mini-m4.jpg',
     name: 'Mac mini M4',
     tagline: { ka: 'პატარა კორპუსი. სრული Mac.', en: 'Tiny box. Whole Mac.', ru: 'Маленький корпус. Полноценный Mac.' },
     price: 1699, oldPrice: 2179, condition: 'new', badge: 'sale', rating: 4.9, reviews: 212,
