@@ -84,6 +84,7 @@ uniform vec2 texelSize;
 uniform vec2 dyeTexelSize;
 uniform float dt;
 uniform float dissipation;
+uniform float brightDecay;
 
 vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
   vec2 st = uv / tsize - 0.5;
@@ -107,6 +108,14 @@ void main () {
   float decay = 1.0 + dissipation * dt;
   result /= decay;
 #ifdef ZERO_FLOOR
+  /* Bright dye burns off faster than dim dye. One dissipation rate cannot serve
+     both the ambient field, which must persist or the background empties, and a
+     landing plume, which must clear or every splash lingers for ten seconds.
+     Squaring the luminance sharpens the split: ambient sits near 0.1 (0.01 after
+     squaring, so barely touched) while a plume peaks above 1.0 and is hit hard. */
+  float lum = max(result.r, max(result.g, result.b));
+  result -= result * clamp(brightDecay * lum * lum * dt, 0.0, 0.9);
+
   /* Half-float division is asymptotic: dye parks around 1e-4 and never reaches
      zero, leaving a permanent haze over the whole ground. Subtract an absolute
      floor — dye pass only, never velocity, where it would kill slow currents. */
@@ -315,6 +324,7 @@ const DESKTOP = {
   splatRadius: 0.14, splatForce: 3000, intensity: 1.45, maxDpr: 1.5,
   ambient: 2.0,           /* emitters per second, 0 disables */
   timeScale: 0.5,
+  brightDecay: 6,         /* extra decay on bright dye — clears plumes */
 };
 const MOBILE = {
   simRes: 96, dyeRes: 512, pressureIters: 12,
@@ -322,6 +332,7 @@ const MOBILE = {
   splatRadius: 0.17, splatForce: 2600, intensity: 1.35, maxDpr: 1,
   ambient: 1.5,
   timeScale: 0.5,
+  brightDecay: 7,
 };
 
 /**
@@ -620,6 +631,7 @@ export function createFluid(canvas, opts = {}) {
     gl.uniform1i(P.advectDye.uniforms.uSource, dye.read.attach(1));
     gl.uniform1f(P.advectDye.uniforms.dt, dt);
     gl.uniform1f(P.advectDye.uniforms.dissipation, cfg.densityDissipation);
+    gl.uniform1f(P.advectDye.uniforms.brightDecay, cfg.brightDecay);
     blit(dye.write);
     dye.swap();
   }
