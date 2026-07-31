@@ -1202,7 +1202,8 @@ function bootFluid() {
     return;
   }
 
-  fluid.seed(7);
+  /* No boot seed: the ground starts clean and colour appears only from the
+     pointer and from card landings. */
 
   /* Drag pushes the fluid. Listened on window rather than the canvas, because
      the canvas is behind the DOM with pointer-events: none. */

@@ -342,17 +342,21 @@ export function hexToRgb(hex) {
      static and the dye just sits there. */
 const DESKTOP = {
   simRes: 128, dyeRes: 1024, pressureIters: 20,
-  velocityDissipation: 0.4, densityDissipation: 0.085, curl: 9,
+  velocityDissipation: 0.4, densityDissipation: 0.55, curl: 9,
   splatRadius: 0.14, splatForce: 3000, intensity: 1.45, maxDpr: 1.5,
-  ambient: 2.0,           /* emitters per second, 0 disables */
+  /* No self-generated colour: the field only lights up from the pointer and
+     from card landings. densityDissipation is the LIFETIME dial — raising it
+     clears colour sooner without touching how fast the fluid moves, which is
+     timeScale and velocityDissipation, both unchanged. */
+  ambient: 0,
   timeScale: 0.5,
   plumeDecay: 5.5,        /* how fast tagged plume dye clears */
 };
 const MOBILE = {
   simRes: 96, dyeRes: 512, pressureIters: 12,
-  velocityDissipation: 0.45, densityDissipation: 0.12, curl: 7,
+  velocityDissipation: 0.45, densityDissipation: 0.65, curl: 7,
   splatRadius: 0.17, splatForce: 2600, intensity: 1.35, maxDpr: 1,
-  ambient: 1.5,
+  ambient: 0,
   timeScale: 0.5,
   plumeDecay: 6.5,
 };
