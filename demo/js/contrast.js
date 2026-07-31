@@ -49,7 +49,8 @@ export function createContrast(fluid) {
      readback generation changes. */
   const textCnv = document.createElement('canvas');
   const accentCnv = document.createElement('canvas');
-  let textUrl = '', accentUrl = '';
+  const dimCnv = document.createElement('canvas');
+  let textUrl = '', accentUrl = '', dimUrl = '';
 
   function cssColor(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -110,6 +111,11 @@ export function createContrast(fluid) {
     const ink = parseColor(cssColor('--ink', '#0B1119'));
     textUrl = paintMap(textCnv, sample, light, ink);
 
+    /* Secondary text keeps its reduced weight in BOTH states — mapping it to
+       the full-contrast pair would promote every caption to headline colour
+       the moment a plume passes. #9FADBF on dark ground, #3C4654 on bright. */
+    dimUrl = paintMap(dimCnv, sample, [159, 173, 191], [60, 70, 84]);
+
     /* Accent: bright teal on dark ground, deep teal on bright ground. */
     const lume = parseColor(cssColor('--lume', '#2FD6B4'));
     const lume900 = parseColor(cssColor('--lume-900', '#0A5346'));
@@ -152,7 +158,7 @@ export function createContrast(fluid) {
         /* Position must track the element even when the map did not change —
            the page scrolls under a fixed background. Rects are cached and
            refreshed by the scroll handler, never measured here. */
-        applyMap(item.el, item.rect, textUrl);
+        applyMap(item.el, item.rect, item.map === 'dim' ? dimUrl : textUrl);
         for (const sp of item.accents) {
           /* The accent span's own rect: offset within the parent is stable, so
              it is derived from the cached parent rect plus a cached delta. */
@@ -203,6 +209,7 @@ export function createContrast(fluid) {
       const rect = el.getBoundingClientRect();
       return {
         el, rect, visible: false, dark: false,
+        map: el.getAttribute('data-adaptive') === 'dim' ? 'dim' : 'text',
         accents: [...el.querySelectorAll('.lume')].map(sp => {
           const r = sp.getBoundingClientRect();
           return { el: sp, dx: r.left - rect.left, dy: r.top - rect.top };

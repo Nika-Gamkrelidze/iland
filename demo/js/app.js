@@ -193,10 +193,10 @@ function viewHome() {
           <a class="btn btn--ghost btn--lg" href="#/service">${esc(u('bookRepair'))}</a>
         </div>
         <div class="hero__stats">
-          <div class="hero__stat"><b class="num" data-count="11">11</b><span>${esc(u('statYears'))}</span></div>
-          <div class="hero__stat"><b class="num" data-count="9400">9,400</b><span>${esc(u('statRepairs'))}</span></div>
-          <div class="hero__stat"><b class="num" data-count="12">12</b><span>${esc(u('statWarranty'))}</span></div>
-          <div class="hero__stat"><b class="num" data-count="3">3</b><span>${esc(u('statDelivery'))}</span></div>
+          <div class="hero__stat"><b class="num" data-count="11" data-adaptive>11</b><span data-adaptive="dim">${esc(u('statYears'))}</span></div>
+          <div class="hero__stat"><b class="num" data-count="9400" data-adaptive>9,400</b><span data-adaptive="dim">${esc(u('statRepairs'))}</span></div>
+          <div class="hero__stat"><b class="num" data-count="12" data-adaptive>12</b><span data-adaptive="dim">${esc(u('statWarranty'))}</span></div>
+          <div class="hero__stat"><b class="num" data-count="3" data-adaptive>3</b><span data-adaptive="dim">${esc(u('statDelivery'))}</span></div>
         </div>
       </div>
       <div class="stage">
@@ -210,7 +210,7 @@ function viewHome() {
   <section class="section wrap" data-reveal>
     <div class="section__head">
       <div>
-        <p class="eyebrow">${esc(u('browse'))}</p>
+        <p class="eyebrow" data-adaptive="dim">${esc(u('browse'))}</p>
         <h2 class="section__title" data-adaptive>${esc(u('browseSub'))}</h2>
       </div>
     </div>
@@ -234,7 +234,7 @@ function viewHome() {
   <section class="section wrap" data-reveal>
     <div class="section__head">
       <div>
-        <p class="eyebrow">${esc(u('featured'))}</p>
+        <p class="eyebrow" data-adaptive="dim">${esc(u('featured'))}</p>
         <h2 class="section__title" data-adaptive>${esc(u('featuredSub'))}</h2>
       </div>
       <a class="btn btn--ghost btn--sm" href="#/c/iphone">${esc(u('seeAll'))} ${icon('arrow', 15)}</a>
@@ -271,7 +271,7 @@ function viewHome() {
   <section class="section wrap" data-reveal>
     <div class="section__head">
       <div>
-        <p class="eyebrow">${esc(u('deals'))}</p>
+        <p class="eyebrow" data-adaptive="dim">${esc(u('deals'))}</p>
         <h2 class="section__title" data-adaptive>${esc(u('dealsSub'))}</h2>
       </div>
     </div>
@@ -282,9 +282,9 @@ function viewHome() {
   <section class="section wrap" data-reveal>
     <div class="section__head">
       <div>
-        <p class="eyebrow">${esc(S.t(S.getState().categories.find(c => c.id === 'service')))}</p>
+        <p class="eyebrow" data-adaptive="dim">${esc(S.t(S.getState().categories.find(c => c.id === 'service')))}</p>
         <h2 class="section__title" data-adaptive>${esc(u('serviceTitle'))}</h2>
-        <p class="section__sub mt-3">${esc(u('serviceSub'))}</p>
+        <p class="section__sub mt-3" data-adaptive="dim">${esc(u('serviceSub'))}</p>
       </div>
       <a class="btn btn--ghost btn--sm" href="#/service">${esc(u('seeAll'))} ${icon('arrow', 15)}</a>
     </div>
@@ -337,7 +337,7 @@ function viewCategory(catId) {
   return `
   <section class="section wrap">
     <header class="page-head">
-      <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
+      <p class="eyebrow" data-adaptive="dim"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(cat))}</p>
       <h1 class="section__title mt-3" data-adaptive style="font-size:var(--step-5)">${esc(S.t(cat))}</h1>
     </header>
     ${groupChips(items)}
@@ -368,7 +368,7 @@ function viewProduct(id) {
   return `
   <section class="wrap pdp" id="pdp" data-product="${esc(p.id)}">
     <div>
-      <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> ·
+      <p class="eyebrow" data-adaptive="dim"><a href="#/">${esc(u('home'))}</a> ·
         <a href="#/c/${esc(p.category)}">${esc(S.t(cat))}</a></p>
       <div class="pdp__stage${p.image ? ' pdp__stage--photo' : ''} mt-4" id="pdpStage">
         <div class="stage__glow" aria-hidden="true"></div>
@@ -446,7 +446,7 @@ function viewService() {
     <div class="aurora" aria-hidden="true" style="opacity:.45"></div>
     <div class="grain" aria-hidden="true"></div>
     <div class="wrap">
-      <p class="eyebrow"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(st.categories.find(c => c.id === 'service')))}</p>
+      <p class="eyebrow" data-adaptive="dim"><a href="#/">${esc(u('home'))}</a> · ${esc(S.t(st.categories.find(c => c.id === 'service')))}</p>
       <h1 class="hero__title display mt-4" data-adaptive style="font-size:var(--step-5)">${esc(u('serviceTitle'))}</h1>
       <p class="hero__lede" data-adaptive>${esc(u('serviceSub'))}</p>
     </div>

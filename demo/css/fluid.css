@@ -180,23 +180,8 @@ body.has-fluid .track__copy > .panel {
    (breadcrumbs, section ledes, eyebrows) unreadable for a second or two. The
    scrim is anchored to the text, bleeds well past it, and fades to nothing so
    there is never a visible rectangle. */
-body.has-fluid .page-head,
-body.has-fluid .section__head {
-  position: relative;
-  isolation: isolate;
-}
-body.has-fluid .page-head::before,
-body.has-fluid .section__head::before {
-  content: '';
-  position: absolute;
-  inset: -18% 0 -22% -8%;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(78% 86% at 20% 50%,
-              color-mix(in oklab, var(--bg) 86%, transparent) 0%,
-              color-mix(in oklab, var(--bg) 54%, transparent) 54%,
-              transparent 82%);
-}
+/* Section and page heads carry NO scrim: per-glyph adaptive contrast keeps
+   this text readable now, so the fluid stays fully visible behind it. */
 
 /* ------------------------------------------------- adaptive text contrast --- */
 

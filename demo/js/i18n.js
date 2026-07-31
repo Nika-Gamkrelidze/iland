@@ -36,7 +36,7 @@ export const UI = {
   statDelivery:  { ka: 'საათში თბილისში',             en: 'hours in Tbilisi',         ru: 'часа по Тбилиси' },
 
   browse:        { ka: 'დაათვალიერე',                 en: 'Browse',                   ru: 'Каталог' },
-  browseSub:     { ka: 'რვა კატეგორია. ყველა ერთ თაროზე.', en: 'Eight categories. One shelf.', ru: 'Восемь категорий. Одна полка.' },
+  browseSub:     { ka: 'ყველა კატეგორია — ერთ თაროზე.', en: 'Every category, on one shelf.', ru: 'Все категории — на одной полке.' },
   featured:      { ka: 'შერჩეული',                    en: 'Featured',                 ru: 'Избранное' },
   featuredSub:   { ka: 'ის, რასაც ჩვენ თვითონ ვიყიდიდით.', en: 'What we would buy ourselves.', ru: 'То, что купили бы сами.' },
   deals:         { ka: 'ფასდაკლებები',                en: 'On sale',                  ru: 'Скидки' },

@@ -270,10 +270,12 @@ void main () {
 
   /* Light ground: screen blend would be a no-op on near-white, so dye has to
      SUBTRACT instead — ink soaking into paper. Normalising by the dye's own
-     luminance recovers its hue, which is then laid over the ground at 62%
-     value so it reads as saturated pigment rather than grey. */
+     luminance recovers its hue for the body of the wash, and the densest dye
+     continues past pigment into near-black: the culmination mirrors the dark
+     theme, where it is white. */
   vec3 hue = d / max(a, 1e-4);
-  vec3 onLight = mix(uGround, hue * 0.62, a * 0.92);
+  vec3 pig = mix(uGround, hue * 0.58, a * 0.92);
+  vec3 onLight = mix(pig, vec3(0.02, 0.03, 0.04), smoothstep(0.55, 1.05, a));
 
   gl_FragColor = vec4(mix(onDark, onLight, uLight), 1.0);
 }`;

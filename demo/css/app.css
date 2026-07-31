@@ -958,17 +958,23 @@
   transition: border-color var(--t-base) var(--e-quiet), translate var(--t-slow) var(--e-swift);
 }
 .cat:hover { border-color: var(--line-strong); translate: 0 -4px; }
-.cat__name { font-size: var(--step-2); font-weight: 750; letter-spacing: -0.024em; }
+.cat__name { font-size: var(--step-2); font-weight: 750; letter-spacing: -0.024em; white-space: nowrap; }
 :lang(ka) .cat__name { letter-spacing: 0; }
-.cat__count { font-size: var(--step--2); color: var(--text-3); }
+.cat__count { font-size: var(--step--2); color: var(--text-3); white-space: nowrap; }
+/* Monochrome silhouette, theme-reactive: brightness(0) flattens the drawn
+   device to black (internal opacities survive, so it keeps its depth), and
+   invert lifts it to white on the dark theme. Done in CSS rather than by
+   re-rendering the SVG so a theme toggle recolours it instantly. */
 .cat svg {
   position: absolute;
   right: -14%; bottom: -12%;
   height: 130px; width: auto;
-  opacity: 0.5;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
   transition: scale var(--t-slow) var(--e-swift), opacity var(--t-slow) var(--e-quiet);
 }
-.cat:hover svg { scale: 1.1; opacity: 0.85; }
+:root[data-theme='light'] .cat svg { filter: brightness(0); opacity: 0.72; }
+.cat:hover svg { scale: 1.1; opacity: 1; }
 
 /* ----------------------------------------------------------------- drawer --- */
 
