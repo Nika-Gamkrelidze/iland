@@ -19,7 +19,9 @@
 <canvas id="fluid" aria-hidden="true"></canvas>
 
 <!-- ── announcement ─────────────────────────────────────────────────────── -->
-<div class="marquee" id="marquee" style="position:relative">
+<!-- Temporarily hidden per client request — remove the `hidden` attribute to
+     bring the announcement ticker back. The JS that populates it still runs. -->
+<div class="marquee" id="marquee" style="position:relative" hidden>
   <div class="marquee__track" id="marqueeTrack"></div>
   <button class="marquee__pause" id="marqueePause" aria-pressed="false" aria-label="შეაჩერე ლენტა">⏸</button>
 </div>
