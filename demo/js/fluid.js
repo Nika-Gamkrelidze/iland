@@ -522,11 +522,13 @@ export function createFluid(canvas, opts = {}) {
      40x24 is enough to place a headline; readPixels is a GPU stall so it runs
      at 12Hz, not per frame. RGBA8 because readPixels on a half-float target is
      not portable. */
-  const SAMPLE_W = 40, SAMPLE_H = 24;
+  const SAMPLE_W = 80, SAMPLE_H = 48;
   let sampleFBO = null;
   const sampleBuf = new Uint8Array(SAMPLE_W * SAMPLE_H * 4);
   const lumGrid = new Float32Array(SAMPLE_W * SAMPLE_H);
   let sampleAccum = 0;
+  let sampleGen = 0;      /* bumped on every readback so consumers can skip
+                             rebuilding anything when the grid has not changed */
   let simW, simH, dyeW, dyeH;
 
   function resolution(target) {
@@ -568,6 +570,13 @@ export function createFluid(canvas, opts = {}) {
          text will read against it. */
       lumGrid[i] = (0.2126 * sampleBuf[o] + 0.7152 * sampleBuf[o + 1] + 0.0722 * sampleBuf[o + 2]) / 255;
     }
+    sampleGen++;
+  }
+
+  /** The raw luminance grid, for consumers that need the whole field rather
+      than a point sample. Rows are bottom-up (GL order) — callers flip. */
+  function groundSample() {
+    return { grid: lumGrid, w: SAMPLE_W, h: SAMPLE_H, gen: sampleGen };
   }
 
   /**
@@ -1003,7 +1012,7 @@ export function createFluid(canvas, opts = {}) {
   return {
     supported: true, isWebGL2, supportLinear, config: cfg,
     splat, plume, plumeUnder, pointerAt, resize, pause, resume, destroy, seed, tick, setGround,
-    luminanceAt, peakLuminanceIn,
+    luminanceAt, peakLuminanceIn, groundSample,
     get running() { return running; },
     stats: () => ({ simW, simH, dyeW, dyeH, dpr, queued: queue.length }),
   };

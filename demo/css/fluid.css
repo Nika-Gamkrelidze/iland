@@ -200,7 +200,29 @@ body.has-fluid .section__head::before {
 
 /* ------------------------------------------------- adaptive text contrast --- */
 
-/* `on-light` is toggled by contrast.js when the fluid behind an element gets
+/* Primary mode: `ink-map`. contrast.js builds a small image of the ground's
+   brightness — light text colour where the fluid is dark, ink where it is
+   bright — stretches it over the viewport and clips it to the glyphs. The
+   colour boundary therefore runs THROUGH the text: only the letters actually
+   standing on a bright plume go dark. Inline styles carry the image and its
+   viewport alignment; this rule does the clipping. */
+body.has-fluid [data-adaptive].ink-map {
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent !important;
+  background-repeat: no-repeat;
+  text-shadow: none;
+  transition: none;
+}
+body.has-fluid [data-adaptive].ink-map .lume {
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent !important;
+  background-repeat: no-repeat;
+}
+
+/* Fallback mode, engines without background-clip:text only.
+   `on-light` is toggled by contrast.js when the fluid behind an element gets
    bright enough that light text would stop being readable. The transition is
    deliberately slow and eased: the fluid moves continuously, so a hard swap
    reads as a glitch while a 400ms fade reads as the type responding to it.
