@@ -533,7 +533,81 @@
               box-shadow var(--t-slow) var(--e-swift),
               translate var(--t-slow) var(--e-swift);
 }
-.card:hover { border-color: var(--line-strong); translate: 0 -5px; box-shadow: var(--shadow-3); }
+/* Hover lift uses `transform`, NOT `translate` — the fall animation owns
+   `translate`, and the two individual properties compose rather than fight.
+   Putting hover on `translate` hijacks a falling card mid-flight, so
+   `animationend` never fires: no splash, and the card can stick in mid-air. */
+.card:hover { border-color: var(--line-strong); transform: translateY(-5px); box-shadow: var(--shadow-3); }
+.card { transition-property: border-color, box-shadow, transform; }
+
+/* ------------------------------------------------------------- card fall --- */
+
+/* The 1px sentinel the observer actually watches. It sits on the contact line,
+   which is the only edge that matters for triggering the splash. */
+.card__floor {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Armed and falling states are added by JS only. A card with no JS, or with a
+   thrown error in the choreography, is simply visible at rest. */
+.card.is-armed {
+  translate: 0 calc(-1 * var(--fall-dist));
+  opacity: 0;
+}
+.card.is-falling {
+  animation: fall-y var(--fall-dur) var(--e-fall) var(--fall-delay) both,
+             fall-o calc(var(--fall-dur) * 0.4) linear var(--fall-delay) both;
+  will-change: translate, opacity;
+}
+.card.is-landed { will-change: auto; }
+
+@keyframes fall-y {
+  from { translate: 0 calc(-1 * var(--fall-dist)); }
+  to   { translate: 0 0; }
+}
+/* Fade over the first 40% only. A card that is invisible for the whole flight
+   has no perceived travel — you need to watch it hit. */
+@keyframes fall-o {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Contact flash: the visual bridge between the card and the fluid plume. No
+   geometric squash — the card has a 1px border and a 28px radius, and any
+   non-uniform scale visibly distorts both and stretches the Georgian type.
+   ::after is already the pointer sheen, so this is ::before. */
+.card.is-landed::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 40%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to top,
+              color-mix(in oklab, var(--accent) 55%, transparent), transparent 78%);
+  mix-blend-mode: screen;
+  animation: contact 620ms var(--e-reveal) both;
+}
+@keyframes contact {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (max-width: 40rem) {
+  /* 160px is a jarring jump next to a card on a 360px-wide phone. */
+  :root { --fall-dist: 96px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* `reduce` means no large-area motion, not shorter motion. */
+  .card.is-armed { translate: none; opacity: 1; }
+  .card.is-falling { animation: none; }
+  .card.is-landed::before { animation: none; opacity: 0; }
+}
 
 /* Specular sheen follows the pointer. --mx/--my are written by one delegated
    pointermove handler, batched into a single rAF. */
@@ -1115,20 +1189,6 @@ dialog.drawer[open]::backdrop {
 }
 @keyframes rise { from { opacity: 0; translate: 0 26px; } to { opacity: 1; translate: 0 0; } }
 
-/* Scroll progress bar, compositor-driven, no listeners. */
-.progress {
-  position: fixed;
-  inset: 0 0 auto 0;
-  height: 2px;
-  z-index: calc(var(--z-nav) + 1);
-  background: var(--accent);
-  transform-origin: 0 50%;
-  scale: 0 1;
-}
-@supports (animation-timeline: scroll()) {
-  .progress { animation: grow linear both; animation-timeline: scroll(root block); }
-}
-@keyframes grow { to { scale: 1 1; } }
 
 /* ------------------------------------------------------------ pinned story --- */
 
@@ -1272,3 +1332,52 @@ dialog.drawer--left[open] { translate: 0 0; }
 @media (min-width: 60.001rem) {
   dialog.drawer--left { display: none; }
 }
+
+/* ----------------------------------------------------------- product art --- */
+
+/* Real photographs from the client's catalogue sit in the same wells as the
+   drawn fallbacks, so both have to obey the same box. `contain` because these
+   are product shots of wildly different aspect ratios — a MacBook is landscape,
+   an iPhone is portrait — and cropping either would cut off the product. */
+.product-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.card__media .product-photo { padding: 8%; }
+.pdp__stage .product-photo { padding: 10%; }
+.line-item__media .product-photo { padding: 12%; }
+.search-res .product-photo { width: 34px; height: 34px; flex: none; }
+
+/* The client's photos are all shot on white. Rather than fight that with a
+   blend mode — `screen` keeps white white, `multiply` eats the product — the
+   white is made deliberate: the media well becomes a light product tile, which
+   is how Apple resellers present these anyway. The tile is slightly warm rather
+   than pure #fff so it sits in the palette instead of glaring out of it. */
+.card__media--photo,
+.pdp__stage--photo {
+  background: linear-gradient(168deg, #FFFFFF 0%, #F4F1EA 100%);
+  border: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+}
+.card__media--photo .product-photo,
+.pdp__stage--photo .product-photo { mix-blend-mode: multiply; }
+
+/* Badges and the favourite button are painted OVER the light tile, and they sit
+   before it in the DOM so no sibling selector reaches them — hence :has() on the
+   card. Their default translucent-accent fill has almost no contrast on white. */
+.card:has(.card__media--photo) .badge--new {
+  background: var(--lume-900);
+  color: var(--lume-100);
+}
+.card:has(.card__media--photo) .badge--demo {
+  background: #FFFFFFEE;
+  color: var(--ink);
+  border-color: color-mix(in oklab, var(--ink) 20%, transparent);
+}
+.card:has(.card__media--photo) .card__fav {
+  background: #FFFFFFCC;
+  color: var(--ink-2);
+}
+.card:has(.card__media--photo) .card__fav:hover { color: var(--ink); }
