@@ -199,3 +199,4 @@ export function mountBanner({ here, onReset }) {
 }
 
 export const RESET_DONE = D.resetDone;
+export const RESET_LABEL = D.reset;

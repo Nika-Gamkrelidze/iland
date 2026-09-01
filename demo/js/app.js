@@ -10,7 +10,7 @@ import { UI, TICKER, STORY } from './i18n.js';
 import { createFluid } from './fluid.js';
 import { createChoreography } from './fx.js';
 import { createContrast } from './contrast.js';
-import { IS_DEMO, demoBlocked, blockOn, mountBanner, RESET_DONE } from './demo.js';
+import { IS_DEMO, demoBlocked, blockOn, mountBanner, RESET_DONE, RESET_LABEL } from './demo.js';
 
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -30,6 +30,12 @@ const SITE_NAME = { ka: 'NORVA', en: 'NORVA', ru: 'NORVA' };
 
 /* Whose name goes on an order a demo visitor places. */
 const DEMO_BUYER = { ka: 'დემო ვიზიტორი', en: 'Demo visitor', ru: 'Демо-посетитель' };
+
+/* The page ground, per theme. The fluid solver and the theme-color meta both
+   need it as a literal, so it is named once here rather than inlined twice —
+   inlined, a palette change silently leaves the WebGL ground on the old value
+   and the whole page paints the previous brand's background. */
+const GROUND = { dark: '#131110', light: '#FAF9F7' };
 
 /* ------------------------------------------------------------------ icons */
 
@@ -73,7 +79,7 @@ function productMedia(p, { hex, className = '', eager = false } = {}) {
     return `<img src="${esc(p.image)}" alt="${esc(p.name)}" class="${esc(className)} product-photo"
                  loading="${eager ? 'eager' : 'lazy'}" decoding="async">`;
   }
-  return deviceSVG(p.device, hex || p.colors?.[0]?.hex || '#C2BCB2',
+  return deviceSVG(p.device, hex || p.colors?.[0]?.hex || '#8C949C',
                    { className, ariaLabel: p.name });
 }
 
@@ -113,7 +119,7 @@ function priceBlock(p, { big = false } = {}) {
 }
 
 function productCard(p) {
-  const color = p.colors?.[0]?.hex || '#C2BCB2';
+  const color = p.colors?.[0]?.hex || '#8C949C';
   return `
   <article class="card" data-card="${esc(p.id)}" tabindex="0" role="link"
            aria-label="${esc(p.name)}">
@@ -416,7 +422,7 @@ function viewProduct(id) {
   if (!p) return viewHome();
   const st = S.getState();
   const cat = st.categories.find(c => c.id === p.category);
-  const color = p.colors?.[0]?.hex || '#C2BCB2';
+  const color = p.colors?.[0]?.hex || '#8C949C';
   const size = p.storage?.[0]?.size || '—';
   const pr = S.variantPrice(p, size);
   const cross = st.products
@@ -686,7 +692,7 @@ function wirePDP(id) {
   const p = S.byId(id);
   if (!p) return;
   let size = p.storage?.[0]?.size || '—';
-  let color = p.colors?.[0]?.hex || '#C2BCB2';
+  let color = p.colors?.[0]?.hex || '#8C949C';
 
   const refresh = () => {
     const pr = S.variantPrice(p, size);
@@ -1025,7 +1031,7 @@ function renderCart() {
 
   body.innerHTML = lines.map(l => {
     const p = S.byId(l.id);
-    const hex = p?.colors?.find(c => c.id === l.color)?.hex || l.color || '#7D7E80';
+    const hex = p?.colors?.find(c => c.id === l.color)?.hex || l.color || '#8C949C';
     return `
     <div class="line-item">
       <div class="line-item__media">${p?.image
@@ -1181,11 +1187,21 @@ function renderFooter() {
       ${s.phones.map(ph => `<a href="#/" data-block="contact">${esc(ph)}</a>`).join('')}
       <a href="#/" data-block="contact">${esc(s.email)}</a>
       <a href="admin.html">${esc(u('adminLink'))} →</a>
+      <!-- The banner carries a reset too, but it is dismissible; a visitor who
+           dismissed it and then emptied the catalogue in the open CMS would
+           otherwise have no way back. -->
+      <a href="#/" id="footReset">${esc(S.t(RESET_LABEL))}</a>
     </div>`;
 
   /* The numbers and the address are invented, so tapping one must not dial. */
   $$('#footGrid [data-block]').forEach(a =>
     a.addEventListener('click', blockOn(a.dataset.block)));
+
+  $('#footReset')?.addEventListener('click', e => {
+    e.preventDefault();
+    S.resetToFactory();
+    toast(S.t(RESET_DONE));
+  });
 
   $('#footLegal').textContent =
     `© ${new Date().getFullYear()} ${s.legal} · ${s.taxId} · ${u('rights')}`;
@@ -1210,13 +1226,13 @@ function applyTheme() {
      display pass switches to subtractive ink-on-paper compositing. */
   if (fluid) {
     document.body.classList.add('has-fluid');
-    fluid.setGround(th === 'dark' ? '#04070C' : '#FBFAF7', th !== 'dark');
+    fluid.setGround(th === 'dark' ? GROUND.dark : GROUND.light, th !== 'dark');
     fluid.resume();
   }
   $('#themeIcon').innerHTML = th === 'dark'
     ? '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'
     : '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>';
-  $('meta[name=theme-color]')?.setAttribute('content', th === 'dark' ? '#04070C' : '#FBFAF7');
+  $('meta[name=theme-color]')?.setAttribute('content', th === 'dark' ? GROUND.dark : GROUND.light);
 }
 
 /* Procedural grain — a data-URI SVG turbulence tile, so there is no asset to

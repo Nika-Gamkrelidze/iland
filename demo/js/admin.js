@@ -772,7 +772,7 @@ function productRows() {
   return rows.map(p => {
     const pr = S.priceOf(p, st);
     const cat = st.categories.find(c => c.id === p.category);
-    const hex = p.colors?.[0]?.hex || '#7D7E80';
+    const hex = p.colors?.[0]?.hex || '#8C949C';
     return `
     <tr data-open="${esc(p.id)}">
       <td><div class="a-thumb">${deviceSVG(p.device, hex)}</div></td>
@@ -2085,7 +2085,7 @@ function applyTheme() {
   $('#themeIcon').innerHTML = th === 'dark'
     ? '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>'
     : '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>';
-  $('meta[name=theme-color]')?.setAttribute('content', th === 'dark' ? '#04070C' : '#FBFAF7');
+  $('meta[name=theme-color]')?.setAttribute('content', th === 'dark' ? '#131110' : '#FAF9F7');
 }
 
 function applyLang() {

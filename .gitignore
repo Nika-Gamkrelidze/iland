@@ -8,3 +8,7 @@
 # nothing is built — this project has no build step and no dependencies.
 # If a toolchain is ever added, ignore its output here.
 .scrape-cache/
+
+# local scratch symlinks used for cache-busting during verification
+/dev[0-9]*
+/mainref
