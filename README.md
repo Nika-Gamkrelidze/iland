@@ -5,10 +5,13 @@
 Every company, price, product, order, customer and review you will see is
 invented. NORVA (ka: ნორვა) is a fictional Apple reseller and repair workshop.
 There is **no backend, no database and no external API** — not one request
-leaves the page. All state lives in the visitor's own browser
-(`sessionStorage`) and is thrown away when the tab closes. Two visitors never
-see each other's changes, and nothing a visitor types is stored anywhere but
-on their own machine.
+leaves the page. The catalogue and the cart live in memory and nowhere else,
+so **a refresh is the reset**: reload and you are back to the shipped
+catalogue, whatever the last visitor did to it. Only language and theme are
+written to `sessionStorage`, because resetting a viewer's own preferences on
+every refresh would be hostile rather than clean. Two visitors never see each
+other's changes, and nothing a visitor types is stored anywhere but on their
+own machine.
 
 The site is trilingual (ka / en / ru) and prices are shown in GEL (₾).
 
@@ -51,7 +54,7 @@ demo/
   js/
     app.js               storefront: hash router and view renderers
     admin.js             CMS
-    store.js             the single source of state (sessionStorage)
+    store.js             the single source of state (in memory; see *State*)
     seed.js              the invented catalogue, orders and copy
     i18n.js              ka / en / ru strings and language switching
     devices.js           parametric SVG hardware archetypes (drawn, not photographed)
@@ -88,7 +91,7 @@ storefront picks the changes up — including in another tab.
 there is no server to authenticate against, every byte of state is per-visitor
 and client-side, and a visitor who "logs in" would only ever be editing their
 own throwaway copy of the data. Nothing they change is visible to anyone else,
-and it is gone when they close the tab. In the real product this surface sits
+and it is gone the moment they reload. In the real product this surface sits
 behind real authentication; in the demo there is nothing to protect.
 
 ## Demo mode
@@ -107,7 +110,28 @@ export const IS_DEMO = params.get('demo') !== '0';
 So `IS_DEMO` is on by default, and appending **`?demo=0`** to the URL turns
 the demo furniture off — useful for looking at the build itself without the
 scaffolding. It changes nothing about how the data works; the store is still
-`sessionStorage` either way.
+in memory either way.
+
+## State
+
+Everything the demo lets you change — products, prices, stock, banners,
+campaigns, workshop jobs, orders, site settings, the cart — is held in a plain
+object in `demo/js/store.js` and written nowhere. The consequences are worth
+being explicit about:
+
+- **A refresh resets the demo.** There is no stale blob to inherit, no
+  migration to write when the fixtures change, and no way for one visitor to
+  leave a mess for the next person on a shared machine.
+- **The reset control** in the demo banner and in the footer does the same
+  thing as a reload, minus the scroll jump.
+- **Cross-tab sync still works.** Open the storefront and `/admin` side by
+  side and change a price: the storefront updates live. The state travels over
+  a `BroadcastChannel`, which needs no storage to share it. A tab opened
+  *later* starts from the factory catalogue rather than adopting a sibling's
+  edits — deliberately, so that "reload to reset" stays true whether or not
+  another tab happens to be open.
+- **Language and theme are the one exception**, kept in `sessionStorage` under
+  `nv.demo.pref.v1`. They are the viewer's preferences, not demo data.
 
 ## Fonts
 

@@ -28,9 +28,9 @@ const D = {
     ru: 'Это демо. Компания, цены, наличие и заказы вымышлены — ничего из этого не существует.',
   },
   bannerHint: {
-    ka: 'ცვლილებები ინახება მხოლოდ ამ ჩანართში.',
-    en: 'Your changes live in this tab only.',
-    ru: 'Изменения хранятся только в этой вкладке.',
+    ka: 'ყველაფერი, რასაც შეცვლი, გვერდის განახლებისას ბრუნდება.',
+    en: 'Anything you change comes back on refresh.',
+    ru: 'Всё, что вы измените, вернётся после обновления страницы.',
   },
   reset: { ka: 'დემოს განულება', en: 'Reset demo data', ru: 'Сбросить данные демо' },
   resetDone: { ka: 'დემო განულდა', en: 'Demo data reset', ru: 'Данные демо сброшены' },
@@ -140,7 +140,8 @@ export function blockOn(feature) {
 /**
  * Mount the demo banner. Slim, dismissible for the session, and carrying the
  * one control a visitor needs when they have edited the catalogue into a
- * corner: put it back.
+ * corner: put it back. A reload does the same thing — the catalogue and the
+ * cart are held in memory only — but the button keeps your scroll position.
  *
  * There is no role switcher because the product has no roles — the CMS has no
  * login, no session and no permission check anywhere. Inventing roles here

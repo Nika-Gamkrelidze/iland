@@ -1,26 +1,33 @@
 /* ==========================================================================
    NORVA — store
-   The single source of truth for the whole demo. Seeds from seed.js on first
-   run, then persists to sessionStorage. The admin panel writes here; the
-   storefront reads here; both listen for changes.
+   The single source of truth for the whole demo. The admin panel writes here;
+   the storefront reads here; both listen for changes.
 
-   sessionStorage, not localStorage, and deliberately: this is a public demo,
-   so a visitor's edits must not outlive their tab and must never be inherited
-   by the next person on a shared machine. Cross-tab sync (open the storefront
-   and the CMS side by side and watch a price change land) is kept by
-   broadcasting through a BroadcastChannel instead of the `storage` event.
+   THE CATALOGUE AND THE CART ARE HELD IN MEMORY AND NOWHERE ELSE.
+
+   That is the whole persistence design, and it is deliberate. A refresh is the
+   reset: reload the page and you are back to the shipped catalogue, whatever
+   the last visitor did to it. Nothing survives the tab, nothing is inherited by
+   the next person on a shared machine, and there is no stale blob to migrate
+   when the fixtures change. The reset control in the demo banner does the same
+   thing without losing your scroll position.
+
+   Only genuine viewer preferences — language and theme — are written to
+   sessionStorage, because resetting those on every refresh would be hostile
+   rather than clean.
+
+   Cross-tab sync (open the storefront and the CMS side by side and watch a
+   price change land) rides on a BroadcastChannel, which needs no storage at
+   all: the state travels directly from the tab that changed it.
    ========================================================================== */
 
 import { SITE, CATEGORIES, PRODUCTS, SERVICES, BANNERS, PROMOS, INSTALMENTS, SETTINGS, ORDERS, ACCESSORY_GROUPS, FINISHES } from './seed.js';
 
-const KEY = 'nv.demo.cms.v1';
-const CART_KEY = 'nv.demo.cart.v1';
 const PREF_KEY = 'nv.demo.pref.v1';
 const CHANNEL = 'nv.demo.sync.v1';
 
-/* One switchable backing store. sessionStorage throws in some privacy modes,
-   so every access is already guarded below; this just names the choice once. */
-const store = () => sessionStorage;
+/* Preferences only. Guarded at every call site — it throws in some privacy modes. */
+const prefStore = () => sessionStorage;
 
 /* ------------------------------------------------------------------ state */
 
@@ -39,28 +46,9 @@ function factory() {
   };
 }
 
-let state = load();
+/* Every page load starts from the shipped catalogue. This is the reset. */
+let state = factory();
 const listeners = new Set();
-
-function load() {
-  try {
-    const raw = store().getItem(KEY);
-    if (!raw) return factory();
-    const parsed = JSON.parse(raw);
-    if (parsed?.version !== 1) return factory();
-    return parsed;
-  } catch {
-    return factory();
-  }
-}
-
-function persist() {
-  try {
-    store().setItem(KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('Demo store: could not persist CMS state', e);
-  }
-}
 
 function emit(reason) {
   for (const fn of listeners) {
@@ -74,18 +62,21 @@ export function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
-/* Cross-tab: admin in one tab updates the storefront in another. sessionStorage
-   is per-tab, so the state travels over a BroadcastChannel and each tab writes
-   its own copy. Absent in very old browsers, where tabs simply stay independent. */
+/* Cross-tab: an edit in the CMS tab lands live in the storefront tab. The state
+   travels over the channel itself, so nothing has to be stored to share it.
+   Absent in very old browsers, where tabs simply stay independent.
+
+   A tab opened later starts from the factory catalogue rather than adopting
+   whatever a sibling tab has already edited — deliberately, because "reload to
+   reset" has to stay true whether or not another tab happens to be open. */
 const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel(CHANNEL) : null;
 let muted = false;
 
 if (channel) {
   channel.onmessage = e => {
-    if (!e.data || e.data.key !== KEY) return;
+    if (!e.data || e.data.channel !== CHANNEL) return;
     muted = true;
     state = e.data.state;
-    try { store().setItem(KEY, JSON.stringify(state)); } catch {}
     muted = false;
     emit('external');
   };
@@ -93,7 +84,7 @@ if (channel) {
 
 function broadcast() {
   if (!channel || muted) return;
-  try { channel.postMessage({ key: KEY, state }); } catch {}
+  try { channel.postMessage({ channel: CHANNEL, state }); } catch {}
 }
 
 export const getState = () => state;
@@ -103,20 +94,19 @@ export function update(mutator, reason = 'update') {
   const draft = structuredClone(state);
   const out = mutator(draft);
   state = out === undefined ? draft : out;
-  persist();
   broadcast();
   emit(reason);
   return state;
 }
 
-/** Nuke local edits and go back to the shipped catalogue. */
+/** Nuke local edits and go back to the shipped catalogue — a reload without
+    the reload, for a visitor who has edited the demo into a corner. */
 export function resetToFactory() {
   state = factory();
   cart = [];
-  try { store().removeItem(CART_KEY); } catch {}
-  persist();
   broadcast();
   emit('reset');
+  emit('cart');
   return state;
 }
 
@@ -133,7 +123,6 @@ export function importJSON(text) {
       return { ok: false, error: 'Not a NORVA CMS export — missing products array.' };
     }
     state = { ...factory(), ...parsed, version: 1 };
-    persist();
     broadcast();
     emit('import');
     return { ok: true };
@@ -250,13 +239,10 @@ export function stockState(product) {
 
 /* ------------------------------------------------------------------ cart */
 
-let cart = loadCart();
+/* In memory with the catalogue, and for the same reason: a reload is the reset. */
+let cart = [];
 
-function loadCart() {
-  try { return JSON.parse(store().getItem(CART_KEY)) || []; } catch { return []; }
-}
 function saveCart() {
-  try { store().setItem(CART_KEY, JSON.stringify(cart)); } catch {}
   emit('cart');
 }
 
@@ -332,7 +318,7 @@ function nextOrderId() {
 /* ------------------------------------------------------- language & theme */
 
 function loadPrefs() {
-  try { return JSON.parse(store().getItem(PREF_KEY)) || {}; } catch { return {}; }
+  try { return JSON.parse(prefStore().getItem(PREF_KEY)) || {}; } catch { return {}; }
 }
 let prefs = loadPrefs();
 
@@ -343,13 +329,13 @@ export const getTheme = () => (prefs.theme === 'light' ? 'light' : 'dark');
 export function setLang(lang) {
   if (!LANGS.includes(lang)) return;
   prefs = { ...prefs, lang };
-  try { store().setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
+  try { prefStore().setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
   emit('lang');
 }
 
 export function setTheme(theme) {
   prefs = { ...prefs, theme: theme === 'light' ? 'light' : 'dark' };
-  try { store().setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
+  try { prefStore().setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
   emit('theme');
 }
 

@@ -25,6 +25,10 @@ const tt = bag => S.t(bag);
 
 const main = $('#main');
 
+/* The demo banner paints its own strings, so it must be told when the
+   language changes; applyLang() calls repaint() on this handle. */
+let demoBar = null;
+
 /* Used only where a decorative label needs a name and no product is in hand. */
 const SITE_NAME = { ka: 'NORVA', en: 'NORVA', ru: 'NORVA' };
 
@@ -1208,6 +1212,7 @@ function renderFooter() {
 }
 
 function applyLang() {
+  demoBar?.repaint();
   const lang = S.getLang();
   document.documentElement.lang = lang;
   $$('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
@@ -1370,7 +1375,7 @@ function bootFluid() {
 }
 
 function boot() {
-  mountBanner({
+  demoBar = mountBanner({
     here: 'shop',
     onReset: () => { S.resetToFactory(); toast(S.t(RESET_DONE)); },
   });
