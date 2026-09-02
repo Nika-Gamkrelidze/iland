@@ -1,0 +1,53 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "rewrites": [
+    { "source": "/", "destination": "/demo/index.html" },
+    { "source": "/admin", "destination": "/demo/admin.html" },
+    { "source": "/robots.txt", "destination": "/demo/robots.txt" },
+    { "source": "/site.webmanifest", "destination": "/demo/site.webmanifest" },
+    { "source": "/(.*)", "destination": "/demo/404.html" }
+  ],
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+        }
+      ]
+    },
+
+    {
+      "source": "/demo/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+
+    { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/admin", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/demo/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/demo/admin.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/demo/404.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+
+    {
+      "source": "/demo/css/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+
+    {
+      "source": "/demo/js/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Content-Type", "value": "text/javascript; charset=utf-8" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ka" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NORVA — 404</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#131110">
+<!-- No <script> of any kind: the CSP for this deployment is script-src 'self'
+     with no 'unsafe-inline'. Inline <style> is allowed, external files are not
+     linked so this page stands on its own if the rest of the build moves. -->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100svh;
+    display: grid; place-items: center; padding: 2rem;
+    background: #131110; color: #F2EDE7;
+    font: 400 16px/1.6 "Noto Sans Georgian", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 34rem; text-align: center; }
+  .code {
+    font: 600 0.75rem/1 ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: #8A8078; margin: 0 0 1.25rem;
+  }
+  h1 { font-size: clamp(1.75rem, 6vw, 2.5rem); line-height: 1.15; margin: 0 0 1rem; font-weight: 600; }
+  p { margin: 0 0 0.5rem; color: #B8AEA4; }
+  p[lang="ka"] { color: #F2EDE7; }
+  a.back {
+    display: inline-block; margin-top: 2rem;
+    padding: 0.75rem 1.5rem; border-radius: 999px;
+    background: #F2EDE7; color: #131110;
+    text-decoration: none; font-weight: 600;
+    transition: opacity 0.2s ease;
+  }
+  a.back:hover, a.back:focus-visible { opacity: 0.82; }
+  a.back:focus-visible { outline: 2px solid #F2EDE7; outline-offset: 3px; }
+  .note { margin-top: 2.5rem; font-size: 0.8125rem; color: #6E655E; }
+</style>
+</head>
+<body>
+<main>
+  <p class="code">404</p>
+  <h1>გვერდი ვერ მოიძებნა</h1>
+  <p lang="ka">ასეთი გვერდი აქ არ არის.</p>
+  <p lang="en">This page does not exist.</p>
+  <p lang="ru">Такой страницы здесь нет.</p>
+  <a class="back" href="/">მთავარ გვერდზე · Back home · На главную</a>
+  <p class="note">NORVA — დემო / demo build</p>
+</main>
+</body>
+</html>

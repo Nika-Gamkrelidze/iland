@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ka" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NORVA — Apple, სტენდიდან</title>
+<meta name="description" content="NORVA — Apple-ის გაყიდვა და სახელოსნო თბილისში. ყოველი მოწყობილობა გაივლის სტენდს, ფასი და გარანტია ერთ ეკრანზე. სადემონსტრაციო ვერსია.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#131110">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NORVA">
+<meta property="og:title" content="NORVA — Apple, off the bench">
+<meta property="og:description" content="A clickable demo storefront and CMS. Every company, price and order in it is invented.">
+<link rel="manifest" href="site.webmanifest">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23131110'/%3E%3Cg fill='none' stroke='%23E3AE55' stroke-width='2.2' stroke-linecap='square'%3E%3Cpath d='M11 8H7v16h4'/%3E%3Cpath d='M21 8h4v16h-4'/%3E%3C/g%3E%3Cpath d='M16 11v10' stroke='%23F4F0EB' stroke-width='2.2' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/fluid.css">
+</head>
+<body>
+
+<a class="skip" href="#main">გადადი მთავარ შიგთავსზე</a>
+<canvas id="fluid" aria-hidden="true"></canvas>
+
+<!-- ── announcement ─────────────────────────────────────────────────────── -->
+<!-- Temporarily hidden per client request — remove the `hidden` attribute to
+     bring the announcement ticker back. The JS that populates it still runs. -->
+<div class="marquee" id="marquee" style="position:relative" hidden>
+  <div class="marquee__track" id="marqueeTrack"></div>
+  <button class="marquee__pause" id="marqueePause" aria-pressed="false" aria-label="შეაჩერე ლენტა">⏸</button>
+</div>
+
+<!-- ── navigation ───────────────────────────────────────────────────────── -->
+<header class="nav" id="nav">
+  <div class="wrap nav__inner">
+    <a href="#/" class="logo" aria-label="NORVA — მთავარი">
+      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path class="logo__jaw" d="M14 9H8v22h6" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="square"/>
+        <path class="logo__jaw" d="M26 9h6v22h-6" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="square"/>
+        <path d="M20 13v14" stroke="var(--text)" stroke-width="2.6" stroke-linecap="square"/>
+      </svg>
+      <span class="logo__word">NORVA</span>
+    </a>
+
+    <div class="nav__tools" style="position:relative">
+      <button class="icon-btn nav__burger" id="menuBtn" aria-label="მენიუ" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="searchBtn" aria-label="ძებნა" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>
+        </svg>
+      </button>
+
+      <button class="icon-btn" id="themeBtn" aria-label="თემის შეცვლა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="themeIcon">
+          <circle cx="12" cy="12" r="4.5"/>
+          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>
+        </svg>
+      </button>
+
+      <div class="lang" role="group" aria-label="ენა">
+        <button data-lang="ka" aria-pressed="true">ქარ</button>
+        <button data-lang="en" aria-pressed="false">EN</button>
+        <button data-lang="ru" aria-pressed="false">RU</button>
+      </div>
+
+      <button class="icon-btn" id="cartBtn" aria-label="კალათა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 7h13l-1.4 9.3a2 2 0 0 1-2 1.7H9.4a2 2 0 0 1-2-1.7L6 7Z"/>
+          <path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>
+        </svg>
+        <span class="cart-count" id="cartCount" data-n="0">0</span>
+      </button>
+
+      <div class="search-pop hide" id="searchPop">
+        <input type="search" id="searchInput" placeholder="მოძებნე პროდუქტი…" autocomplete="off" aria-label="ძებნა">
+        <div class="search-res" id="searchRes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subnav">
+    <div class="wrap subnav__inner">
+      <nav class="nav__list" id="navList" aria-label="კატეგორიები"></nav>
+    </div>
+  </div>
+</header>
+
+<!-- ── router outlet ────────────────────────────────────────────────────── -->
+<main id="main"></main>
+
+<!-- ── footer ───────────────────────────────────────────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__grid" id="footGrid"></div>
+    <div class="foot__bar">
+      <span id="footLegal"></span>
+      <div class="pay">
+        <span>VISA</span><span>MASTERCARD</span><span>Apple&nbsp;Pay</span><span>განვადება</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ── cart drawer ──────────────────────────────────────────────────────── -->
+<dialog class="drawer" id="cartDrawer" aria-label="კალათა">
+  <div class="drawer__inner">
+    <div class="drawer__head">
+      <h2 class="drawer__title" id="cartTitle">კალათა</h2>
+      <button class="icon-btn" id="cartClose" aria-label="დახურვა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer__body" id="cartBody"></div>
+    <div class="drawer__foot" id="cartFoot"></div>
+  </div>
+</dialog>
+
+<!-- ── mobile menu ──────────────────────────────────────────────────────── -->
+<dialog class="drawer" id="menuDrawer" aria-label="მენიუ">
+  <div class="drawer__inner">
+    <div class="drawer__head">
+      <span class="logo">
+        <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path class="logo__jaw" d="M14 9H8v22h6" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="square"/>
+          <path class="logo__jaw" d="M26 9h6v22h-6" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="square"/>
+          <path d="M20 13v14" stroke="var(--text)" stroke-width="2.6" stroke-linecap="square"/>
+      </svg>
+        <span class="logo__word">NORVA</span>
+      </span>
+      <button class="icon-btn" id="menuClose" aria-label="დახურვა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer__body"><nav id="menuList" aria-label="კატეგორიები"></nav></div>
+    <div class="drawer__foot" id="menuFoot"></div>
+  </div>
+</dialog>
+
+<!-- ── repair booking ───────────────────────────────────────────────────── -->
+<dialog class="drawer drawer--modal" id="bookDrawer" aria-label="სახელოსნოში ჩაწერა">
+  <div class="drawer__inner">
+    <div class="drawer__head">
+      <h2 class="drawer__title" id="bookTitle">სახელოსნოში ჩაწერა</h2>
+      <button class="icon-btn" id="bookClose" aria-label="დახურვა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="m6 6 12 12M18 6 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer__body" id="bookBody"></div>
+    <div class="drawer__foot" id="bookFoot"></div>
+  </div>
+</dialog>
+
+<div class="toast-zone" id="toastZone" aria-live="polite" aria-atomic="false"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

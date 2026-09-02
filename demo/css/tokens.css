@@ -1,0 +1,326 @@
+/* ==========================================================================
+   NORVA — design tokens
+   One file, one source of truth. Everything downstream reads these variables
+   and nothing else.
+
+   Typography here is not decoration — it encodes hard rules about setting
+   Mkhedruli (ქართული) next to Latin. Read the :lang(ka) blocks before
+   changing anything: Georgian has no uppercase, no italic, and needs both
+   more leading and more size than the Latin at the same nominal step.
+   ========================================================================== */
+
+/* --------------------------------------------------------------- fonts --- */
+/* Self-hosted, see css/fonts.css — the page makes no third-party request.
+
+   A serif display over a sans text face. Noto Serif Georgian and Noto Sans
+   Georgian are the two free variable faces that set Mkhedruli and Latin from
+   one design with a real heavy weight; Noto Serif and Noto Sans carry the
+   Cyrillic, because neither Georgian face ships base Cyrillic. Same Noto
+   skeleton either way, so the seam between scripts is invisible.
+   The lari sign ₾ (U+20BE) lives in latin-ext — never subset it away. */
+
+:root {
+  --font-display: 'Noto Serif Georgian', 'Noto Serif', Georgia, 'Times New Roman',
+                  Sylfaen, serif;
+  --font-text: 'Noto Sans Georgian', 'Noto Sans', system-ui, -apple-system,
+               BlinkMacSystemFont, 'Segoe UI', Sylfaen, 'BPG Arial', 'BPG Glaho', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* ------------------------------------------------------------ palette --- */
+  /* Machined metal under bench light. A warm charcoal ground rather than a
+     cool one, brass for everything the shop stands behind, and a cool indigo
+     for money-off — so a discount never reads as the same voice as a promise. */
+
+  /* Ground — cast iron and soot */
+  --coal:       #131110;   /* page base, dark mode                          */
+  --soot:       #1A1715;   /* raised surface                                */
+  --iron:       #221E1B;   /* card                                          */
+  --steel:      #2C2724;   /* hover / input                                 */
+  --seam:       #3A3330;   /* hairline on dark                              */
+
+  /* Signal — brass under a work lamp */
+  --brass-100:  #FBEFD6;
+  --brass-300:  #F2D49A;
+  --brass:      #E3AE55;   /* PRIMARY. CTA, focus, live states.  8.2:1 on card */
+  --brass-700:  #8A5A12;   /* light-mode accent — see contrast note below    */
+  --brass-900:  #4E3208;
+
+  /* Cold — the discount voice, deliberately not warm */
+  --indigo-300: #C4CBF4;
+  --indigo:     #8E9BEA;   /* SECONDARY. Sale, promo.            6.3:1 on card */
+  --indigo-700: #4A55B8;   /* light-mode promo — see contrast note below     */
+
+  /* Chalk — light mode ground */
+  --chalk-50:   #FAF9F7;
+  --chalk-100:  #F1EFEA;
+  --chalk-200:  #E2DED6;
+  --chalk-300:  #CFC9BE;
+
+  /* Ink — text on light */
+  --ink:        #17150F;
+  --ink-2:      #4B443D;
+  --ink-3:      #6C635B;   /* 5.59:1 on --chalk-50 — AA                      */
+
+  /* Status */
+  --ok:         #4FA96E;
+  --warn:       #C98A1B;
+  --danger:     #C9483F;
+
+  /* ------------------------------------------------ semantic (dark = default) */
+  --bg:            var(--coal);
+  --bg-raised:     var(--soot);
+  --surface:       var(--iron);
+  --surface-2:     var(--steel);
+  --line:          var(--seam);
+  --line-strong:   #4E4642;
+  --text:          #F4F0EB;   /* 16.6:1 on --bg                             */
+  --text-2:        #B3A99F;   /* 7.16:1 on --surface                        */
+  --text-3:        #948B83;   /* 4.95:1 on --surface — AA                   */
+  --accent:        var(--brass);
+  --accent-ink:    #1A1206;   /* text ON accent — 9.2:1                     */
+  --accent-soft:   color-mix(in oklab, var(--brass) 14%, transparent);
+  --promo:         var(--indigo);
+  --promo-ink:     #0B0F2E;   /* 7.15:1 on --promo                          */
+  --glass:         color-mix(in oklab, var(--soot) 88%, transparent);
+
+  /* Depth is carried by rules, not by drop shadows: this is a bench-built
+     look, so surfaces meet at a hairline instead of floating. What is left
+     here is contact shadow only — enough to seat a drawer, never a halo. */
+  --shadow-1:      0 1px 0 rgb(0 0 0 / .35);
+  --shadow-2:      0 2px 0 rgb(0 0 0 / .30), 0 8px 24px -20px rgb(0 0 0 / .70);
+  --shadow-3:      0 3px 0 rgb(0 0 0 / .28), 0 18px 44px -34px rgb(0 0 0 / .80);
+  --shadow-accent: 0 2px 0 color-mix(in oklab, var(--brass-900) 70%, transparent);
+}
+
+/* ------------------------------------------------------------ light mode --- */
+:root[data-theme='light'] {
+  --bg:            var(--chalk-50);
+  --bg-raised:     #FFFFFF;
+  --surface:       #FFFFFF;
+  --surface-2:     var(--chalk-100);
+  --line:          var(--chalk-200);
+  --line-strong:   var(--chalk-300);
+  --text:          var(--ink);
+  --text-2:        var(--ink-2);
+  --text-3:        var(--ink-3);
+  /* Light mode needs its own accent: --brass #E3AE55 sits beautifully on coal
+     and is unreadable on chalk (1.8:1). Measured on --chalk-50 #FAF9F7:
+     --brass-700 #8A5A12 is 5.62:1 as text and 5.91:1 with white on it;
+     --indigo-700 #4A55B8 is 6.08:1 and 6.40:1. Both clear the 4.5:1 AA floor
+     with room, in both directions. Re-measure if either value moves. */
+  --accent:        var(--brass-700);     /* 5.62:1 on --chalk-50 — AA         */
+  --accent-ink:    #FFFFFF;              /* 5.91:1 on --accent — AA           */
+  --accent-soft:   color-mix(in oklab, var(--brass-700) 12%, transparent);
+  --promo:         var(--indigo-700);    /* 6.08:1 on --chalk-50 — AA         */
+  --promo-ink:     #FFFFFF;              /* 6.40:1 on --promo — AA            */
+  --glass:         color-mix(in oklab, #FFFFFF 90%, transparent);
+  --shadow-1:      0 1px 0 rgb(23 21 15 / .10);
+  --shadow-2:      0 2px 0 rgb(23 21 15 / .08), 0 8px 24px -22px rgb(23 21 15 / .30);
+  --shadow-3:      0 3px 0 rgb(23 21 15 / .07), 0 18px 44px -36px rgb(23 21 15 / .35);
+  --shadow-accent: 0 2px 0 color-mix(in oklab, var(--brass-700) 40%, transparent);
+}
+
+/* ------------------------------------------------------------- type scale --- */
+/* Fluid, clamped, 320px → 1600px. A tighter ratio than a display-led scale
+   would use, because the serif is doing the shouting. Georgian gets its own
+   overrides below. */
+:root {
+  --step--2: clamp(0.70rem, 0.68rem + 0.09vw, 0.76rem);
+  --step--1: clamp(0.84rem, 0.81rem + 0.15vw, 0.93rem);
+  --step-0:  clamp(1rem,    0.97rem + 0.17vw, 1.10rem);
+  --step-1:  clamp(1.18rem, 1.12rem + 0.30vw, 1.36rem);
+  --step-2:  clamp(1.39rem, 1.29rem + 0.50vw, 1.69rem);
+  --step-3:  clamp(1.64rem, 1.48rem + 0.79vw, 2.11rem);
+  --step-4:  clamp(1.94rem, 1.70rem + 1.20vw, 2.66rem);
+  --step-5:  clamp(2.29rem, 1.93rem + 1.78vw, 3.35rem);
+  --step-6:  clamp(2.70rem, 2.19rem + 2.57vw, 4.24rem);
+  --step-7:  clamp(3.19rem, 2.45rem + 3.68vw, 5.39rem);
+
+  /* ------------------------------------------------------------- spacing --- */
+  /* A denser step than the old scale: the shop is a workbench, not a gallery. */
+  --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.875rem; --sp-4: 1.25rem;
+  --sp-5: 1.75rem;  --sp-6: 2.25rem;  --sp-7: 3.25rem;  --sp-8: 4.5rem;
+  --sp-9: 6.5rem;   --sp-10: 9rem;    --sp-11: 13rem;
+
+  --gutter: clamp(1rem, 3.4vw, 3rem);
+  --measure: 62ch;
+  --page: 82rem;
+
+  /* -------------------------------------------------------------- radii --- */
+  /* Machined, not moulded. Corners are broken, not rounded. */
+  --r-1: 2px;  --r-2: 4px;  --r-3: 6px;  --r-4: 10px;  --r-5: 14px;
+  --r-pill: 999px;
+
+  /* ------------------------------------------------------------- motion --- */
+  /* Curves are named for their job. If unsure, --e-quiet at 180ms. */
+  --e-quiet:     cubic-bezier(0.40, 0.00, 0.20, 1.00); /* default state change */
+  --e-reveal:    cubic-bezier(0.16, 1.00, 0.30, 1.00); /* entrances 500–900ms  */
+  --e-swift:     cubic-bezier(0.22, 1.00, 0.36, 1.00); /* on-screen response   */
+  --e-exit:      cubic-bezier(0.55, 0.00, 1.00, 0.45); /* departures, ~40% off */
+  --e-pop:       cubic-bezier(0.34, 1.56, 0.64, 1.00); /* confirmations only   */
+  --e-cinematic: cubic-bezier(0.83, 0.00, 0.17, 1.00); /* viewport-scale moves */
+  /* Gravity. Every other curve here decelerates, which reads as floating into
+     place; an impact needs terminal velocity AT contact, so this one is ease-IN.
+     Terminal slope ~2.55, between quadratic (real gravity) and cubic. */
+  --e-fall:      cubic-bezier(0.33, 0.00, 0.66, 0.15);
+
+  --t-fast: 140ms;
+  --t-base: 220ms;
+  --t-slow: 480ms;
+  --t-reveal: 760ms;
+
+  --nav-h: 56px;
+  --rail-h: 44px;
+  --z-nav: 100;  --z-drawer: 200;  --z-toast: 300;
+
+  /* Card fall. 160px/380ms gives a terminal speed of ~18px per frame at 60fps —
+     fast enough to read as speed, slow enough not to strobe. */
+  --fall-dist: 160px;
+  --fall-dur: 380ms;
+  --fall-delay: 0ms;
+}
+
+/* A truer spring where the browser supports linear() — degrades to the bezier. */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --e-pop: linear(0, 0.402 7.4%, 0.842 15.3%, 1.183 24.2%, 1.226, 1.168 34.3%,
+                    1.056 42.4%, 0.994 48.5%, 1.001 63.6%, 1.006 79.8%, 1);
+  }
+}
+
+/* ==========================================================================
+   Script-aware typography
+   These blocks are the difference between a site that looks Georgian-native
+   and one that looks machine-translated.
+   ========================================================================== */
+
+/* Georgian: no uppercase exists, so casing utilities must be neutralised.
+   Mkhedruli's body height sits between Latin x-height and cap-height, so at an
+   identical font-size it reads smaller and lighter — bump it ~5%. Its tall
+   ascenders (ბ ზ ფ ჰ ლ) and deep descenders (გ ყ ც ძ ჭ ჯ ღ) collide at Latin
+   leading, so it needs more line-height. Negative tracking closes the round
+   counters of ო ფ ღ ძ and turns words to mush — never apply it. */
+:lang(ka) {
+  font-size: 1.05em;
+  line-height: 1.65;
+  letter-spacing: 0;
+  hyphens: none;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  font-variant-caps: normal;
+}
+
+/* Georgian has no italic tradition and Noto ships none — the browser would
+   synthesise a sheared Mkhedruli that natives read as broken. Use weight. */
+:lang(ka) em,
+:lang(ka) i {
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Eyebrows / labels: letterspaced caps in Latin and Cyrillic, plain in Georgian. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 400;
+  color: var(--text-3);
+}
+:lang(en) .eyebrow,
+:lang(ru) .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+:lang(ka) .eyebrow {
+  font-family: var(--font-text);
+  font-size: var(--step--1);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+/* Display type. Latin can take tight tracking and 1.05 leading; Georgian cannot. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 620;
+  line-height: 1.06;
+  letter-spacing: -0.014em;
+  text-wrap: balance;
+}
+:lang(ka) .display {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+/* Money and spec tables must never reflow as digits change. Mkhedruli has no
+   digits of its own — Georgian uses Western Arabic numerals, so the price and
+   the label are rendered by the same face and there is no mid-string jump. */
+.num,
+.price,
+.spec-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+/* ------------------------------------------------------------------ reset --- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* `clip`, not `hidden`. Decorative layers here deliberately bleed past their
+     container (scrims, aurora, plume glow) and must never produce a horizontal
+     scrollbar. `hidden` would also work visually but creates a scroll container,
+     which breaks `position: sticky` on the nav; `clip` does not. */
+  overflow-x: clip;
+  /* Never `scroll-behavior: smooth` globally — it desynchronises the scrollbar,
+     breaks PageDown/Home/End and corrupts scroll-timeline accuracy. Opt in
+     per-anchor instead. */
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd { margin: 0; }
+ul[class], ol[class] { list-style: none; margin: 0; padding: 0; }
+img, svg, video { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------------------------------------------------------- reduced motion --- */
+/* Deliberately NOT the blanket `* { animation: none !important }` rule — that
+   looks responsible and is a bug: any reveal whose resting state is opacity:0
+   becomes permanently invisible. Instead, resting states are authored visible
+   and only the ambient/decorative motion is switched off, per component. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 1ms; --t-base: 1ms; --t-slow: 1ms; --t-reveal: 1ms;
+  }
+  .ambient,
+  .marquee__track,
+  .aurora {
+    animation: none !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}

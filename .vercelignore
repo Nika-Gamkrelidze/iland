@@ -1,0 +1,32 @@
+# Nothing here is needed to serve the demo, and a stray file on a public
+# deployment is fetchable by anyone who guesses the path. Be explicit.
+
+# Agent / editor tooling
+.claude/
+.vscode/
+.idea/
+
+# Repo metadata and docs — not part of the served site
+.git/
+.gitattributes
+.gitignore
+README.md
+*.md
+
+# Local dev leftovers
+.DS_Store
+**/.DS_Store
+*.log
+*.swp
+*.swo
+.scrape-cache/
+
+# Secrets — none exist in this repo, and none ever should
+.env
+.env.*
+
+# Dependency trees — this project has none, and never should acquire one
+node_modules/
+
+# This file
+.vercelignore

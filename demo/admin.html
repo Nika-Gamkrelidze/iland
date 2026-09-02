@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ka" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NORVA — CMS</title>
+<meta name="description" content="NORVA CMS — კატალოგი, ბანერები, ფასდაკლებები, სერვისი, შეკვეთები და პარამეტრები.">
+<meta name="theme-color" content="#04070C">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2304070C'/%3E%3Cg fill='none' stroke='%232FD6B4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11.5 9.5 16 17l4.5-7.5' stroke-width='2.6'/%3E%3Cpath d='M16 17v6.5' stroke-width='2.6'/%3E%3Cpath d='M6.5 23.5h19' stroke-width='2.4' opacity='.55'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+
+<style>
+/* ==========================================================================
+   NORVA — admin chrome
+   Admin-only CSS. Every value comes from tokens.css; nothing is redefined
+   here that the storefront already owns (buttons, chips, badges, cards,
+   toasts and the product card itself are reused from app.css verbatim, so
+   the live previews in this panel are the real components).
+
+   Georgian rules apply here exactly as they do on the storefront:
+   no text-transform, no negative tracking and no italics on :lang(ka).
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ shell */
+/* demo.js prepends its banner straight into <body>, and .demo-bar is in flow,
+   so on this two-column grid it would otherwise be dealt into the 264px
+   sidebar column. Give it the whole first row instead. */
+body.adm > .demo-bar { grid-column: 1 / -1; }
+
+body.adm {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.adm-side {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-4);
+  background: var(--bg-raised);
+  border-right: 1px solid var(--line);
+}
+
+.adm-brand { display: flex; flex-direction: column; gap: var(--sp-2); padding-inline: var(--sp-2); }
+.adm-brand__tag {
+  font-size: var(--step--2);
+  color: var(--text-3);
+  font-weight: 600;
+  padding-left: calc(34px + 0.6rem);
+  margin-top: -0.4rem;
+}
+
+.adm-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
+.adm-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0.62rem var(--sp-3);
+  border-radius: var(--r-1);
+  color: var(--text-2);
+  font-size: var(--step--1);
+  font-weight: 600;
+  transition: color var(--t-base) var(--e-quiet), background-color var(--t-base) var(--e-quiet);
+}
+.adm-nav a:hover { color: var(--text); background: var(--surface-2); }
+.adm-nav a[aria-current='page'] { color: var(--text); background: var(--accent-soft); }
+.adm-nav a[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  translate: -6px -50%;
+  width: 3px; height: 18px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.adm-nav svg { width: 17px; height: 17px; flex: none; opacity: 0.9; }
+.adm-nav .adm-nav__n {
+  margin-left: auto;
+  font-size: var(--step--2);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+}
+
+.adm-side__foot { display: grid; gap: var(--sp-2); font-size: var(--step--2); color: var(--text-3); }
+.adm-side__foot a { color: var(--text-2); font-weight: 600; }
+.adm-side__foot a:hover { color: var(--accent); }
+
+/* -------------------------------------------------------------------- top */
+.adm-top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-6);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  border-bottom: 1px solid var(--line);
+}
+.adm-title { font-size: var(--step-2); font-weight: 780; letter-spacing: -0.026em; line-height: 1.1; }
+:lang(ka) .adm-title { letter-spacing: 0; line-height: 1.24; font-weight: 700; }
+.adm-tools { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+
+.a-eyebrow { font-size: var(--step--2); font-weight: 650; color: var(--text-3); }
+:lang(en) .a-eyebrow, :lang(ru) .a-eyebrow { text-transform: uppercase; letter-spacing: 0.09em; }
+:lang(ka) .a-eyebrow { text-transform: none; letter-spacing: 0; }
+
+.adm-body { padding: var(--sp-6); display: grid; gap: var(--sp-6); align-content: start; }
+
+/* ------------------------------------------------------------------ cards */
+.a-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  padding: var(--sp-5);
+}
+.a-card__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4); flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+.a-card__title { font-size: var(--step-1); font-weight: 750; letter-spacing: -0.02em; }
+:lang(ka) .a-card__title { letter-spacing: 0; font-weight: 700; }
+
+/* ------------------------------------------------------------- stat tiles */
+.a-stats { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+.a-stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  padding: var(--sp-5);
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.a-stat b {
+  font-size: var(--step-3);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums lining-nums;
+  /* "13,013₾" must not break before the ₾ — a figure split across two lines
+     reads as a different number. Shrink the type instead if the tile is tight. */
+  white-space: nowrap;
+  font-size: clamp(1.4rem, 1.1rem + 1.1vw, var(--step-3));
+}
+:lang(ka) .a-stat b { letter-spacing: 0; }
+.a-stat span { font-size: var(--step--1); color: var(--text-2); font-weight: 600; }
+.a-stat small { font-size: var(--step--2); color: var(--text-3); }
+.a-stat--accent b { color: var(--accent); }
+.a-stat--warn b { color: var(--warn); }
+
+/* -------------------------------------------------------------- sparkline */
+.a-spark { display: grid; gap: var(--sp-2); }
+.a-spark svg { width: 100%; height: auto; display: block; overflow: visible; }
+.a-spark__labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: var(--step--2);
+  color: var(--text-3);
+}
+.a-spark__labels b { display: block; color: var(--text-2); font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* The sparkline paints entirely through these classes — without them the
+   gradient stops resolve to black and the trend line disappears. */
+.spark-a0 { stop-color: var(--accent); stop-opacity: .34; }
+.spark-a1 { stop-color: var(--accent); stop-opacity: 0; }
+.spark-line { stroke: var(--accent); }
+.spark-grid { stroke: var(--line); }
+.spark-base { stroke: var(--line-strong); }
+.spark-dot  { fill: var(--accent); }
+
+/* ------------------------------------------------------------------ table */
+.a-tablewrap { overflow-x: auto; border-radius: var(--r-2); border: 1px solid var(--line); }
+.a-table { width: 100%; border-collapse: collapse; font-size: var(--step--1); }
+.a-table th {
+  text-align: left;
+  font-size: var(--step--2);
+  font-weight: 650;
+  color: var(--text-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+:lang(en) .a-table th, :lang(ru) .a-table th { text-transform: uppercase; letter-spacing: 0.08em; }
+.a-table td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line); vertical-align: middle; }
+.a-table tbody tr:last-child td { border-bottom: 0; }
+.a-table tbody tr { transition: background-color var(--t-fast) var(--e-quiet); }
+.a-table tbody tr[data-open]:hover { background: var(--surface-2); cursor: pointer; }
+/* Money must never wrap mid-figure — "3,199₾" breaking to "3,19 / 9₾" reads
+   as a different number at a glance. */
+.a-table .num, .a-table .mono { font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+
+.a-thumb {
+  width: 54px; height: 46px;
+  display: grid; place-items: center;
+  background: var(--surface-2);
+  border-radius: var(--r-1);
+  overflow: hidden;
+}
+.a-thumb svg { height: 36px; width: auto; }
+
+.a-rowbtn {
+  display: block;
+  background: none; border: 0; padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 650;
+  color: var(--text);
+  cursor: pointer;
+}
+.a-rowbtn:hover { color: var(--accent); }
+.a-sub { display: block; font-size: var(--step--2); color: var(--text-3); font-weight: 500; }
+
+/* --------------------------------------------------------------- controls */
+.a-switch {
+  position: relative;
+  width: 42px; height: 24px;
+  flex: none;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: background-color var(--t-base) var(--e-quiet), border-color var(--t-base) var(--e-quiet);
+}
+.a-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: translate var(--t-base) var(--e-swift), background-color var(--t-base) var(--e-quiet);
+}
+.a-switch[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); }
+.a-switch[aria-pressed='true']::after { translate: 18px 0; background: var(--accent-ink); }
+
+.a-in {
+  width: 100%;
+  padding: 0.58em 0.75em;
+  border-radius: var(--r-1);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--step--1);
+  transition: border-color var(--t-base) var(--e-quiet);
+}
+.a-in:hover { border-color: var(--line-strong); }
+.a-in:focus { border-color: var(--accent); outline: none; }
+.a-in:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.a-in[aria-invalid='true'] { border-color: var(--danger); }
+textarea.a-in { resize: vertical; min-height: 3.4em; line-height: 1.5; }
+select.a-in { cursor: pointer; }
+input.a-in[type='color'] { padding: 3px; height: 2.4em; cursor: pointer; }
+input.a-in[type='date'] { font-variant-numeric: tabular-nums; }
+
+.a-field { display: grid; gap: 5px; align-content: start; }
+.a-field > label { font-size: var(--step--2); font-weight: 650; color: var(--text-2); }
+.a-hint { font-size: var(--step--2); color: var(--text-3); }
+.a-err { font-size: var(--step--2); color: var(--danger); font-weight: 650; }
+.a-err:empty { display: none; }
+.a-warn { font-size: var(--step--2); color: var(--warn); font-weight: 650; }
+.a-warn:empty { display: none; }
+
+.a-row { display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.a-row--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.a-tri { display: grid; gap: var(--sp-3); grid-template-columns: 1fr; }
+@media (min-width: 52rem) { .a-tri { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.a-group { display: grid; gap: var(--sp-4); padding-block: var(--sp-5); border-top: 1px solid var(--line); }
+.a-group:first-child { border-top: 0; padding-top: 0; }
+.a-group__title { font-size: var(--step--1); font-weight: 700; color: var(--text); }
+.a-group__title span { font-weight: 500; color: var(--text-3); }
+
+.a-check { display: flex; align-items: center; gap: var(--sp-3); }
+.a-check label { font-size: var(--step--1); font-weight: 650; color: var(--text-2); cursor: pointer; }
+
+/* -------------------------------------------------------------- repeaters */
+.a-rep { display: grid; gap: var(--sp-2); }
+.a-rep__row {
+  display: grid;
+  gap: var(--sp-2);
+  align-items: end;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-raised);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+}
+.a-rep__row .a-x { justify-self: end; }
+.a-x {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: var(--r-1);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-3);
+  cursor: pointer;
+  flex: none;
+  transition: color var(--t-base) var(--e-quiet), border-color var(--t-base) var(--e-quiet);
+}
+.a-x:hover { color: var(--danger); border-color: var(--danger); }
+.a-x svg { width: 14px; height: 14px; }
+.a-empty { padding: var(--sp-5); text-align: center; color: var(--text-3); font-size: var(--step--1); }
+
+/* ------------------------------------------------------------- state pips */
+.a-state {
+  display: inline-flex; align-items: center; gap: 0.45em;
+  padding: 0.28em 0.62em;
+  border-radius: var(--r-pill);
+  font-size: var(--step--2);
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.a-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.a-state--live      { color: var(--ok);      background: color-mix(in oklab, var(--ok) 14%, transparent); }
+.a-state--scheduled { color: var(--accent);  background: var(--accent-soft); }
+.a-state--expired   { color: var(--text-3);  background: var(--surface-2); }
+.a-state--paused    { color: var(--promo);   background: color-mix(in oklab, var(--promo) 15%, transparent); }
+.a-state--new       { color: var(--accent);  background: var(--accent-soft); }
+.a-state--packing   { color: var(--warn);    background: color-mix(in oklab, var(--warn) 15%, transparent); }
+.a-state--shipped   { color: var(--accent);  background: color-mix(in oklab, var(--accent) 15%, transparent); }
+.a-state--done      { color: var(--ok);      background: color-mix(in oklab, var(--ok) 14%, transparent); }
+.a-state--cancelled { color: var(--danger);  background: color-mix(in oklab, var(--danger) 14%, transparent); }
+
+.a-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.a-dot--in { background: var(--ok); }
+.a-dot--low { background: var(--warn); }
+.a-dot--last { background: var(--promo); }
+.a-dot--out { background: var(--text-3); }
+
+.a-pill {
+  display: inline-flex; align-items: center; gap: 0.4em;
+  padding: 0.32em 0.7em;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: var(--step--2);
+  font-weight: 650;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.a-pill--accent { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 40%, transparent); background: var(--accent-soft); }
+
+.a-toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: end; margin-bottom: var(--sp-4); }
+.a-toolbar .a-field { min-width: 180px; }
+.a-toolbar__grow { flex: 1 1 220px; }
+
+/* --------------------------------------------------------------- listings */
+.a-list { display: grid; gap: var(--sp-3); }
+.a-item {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-raised);
+  transition: border-color var(--t-base) var(--e-quiet);
+}
+.a-item:hover { border-color: var(--line-strong); }
+.a-item__name { font-weight: 700; font-size: var(--step-0); }
+.a-item__meta { font-size: var(--step--2); color: var(--text-3); margin-top: 3px; }
+.a-item__acts { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; justify-content: end; }
+
+.a-promos { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.a-promo { display: grid; gap: var(--sp-3); align-content: start; }
+.a-kv { display: grid; grid-template-columns: auto 1fr; gap: 4px var(--sp-3); font-size: var(--step--2); }
+.a-kv dt { color: var(--text-3); }
+.a-kv dd { color: var(--text-2); font-weight: 600; }
+.a-example {
+  display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap;
+  padding: var(--sp-3);
+  border-radius: var(--r-1);
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.a-example s { color: var(--text-3); }
+.a-example b { color: var(--accent); font-size: var(--step-1); font-weight: 800; letter-spacing: -0.02em; }
+
+/* ------------------------------------------------------------- slide-over */
+dialog.sheet {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(1020px, 100vw);
+  max-width: 100vw;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--text);
+  translate: 100% 0;
+  transition: translate var(--t-slow) var(--e-reveal),
+              overlay var(--t-slow) allow-discrete,
+              display var(--t-slow) allow-discrete;
+}
+dialog.sheet[open] { translate: 0 0; }
+@starting-style { dialog.sheet[open] { translate: 100% 0; } }
+
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition: background-color var(--t-slow) var(--e-quiet),
+              overlay var(--t-slow) allow-discrete,
+              display var(--t-slow) allow-discrete;
+}
+dialog.sheet[open]::backdrop { background: rgb(0 0 0 / .58); }
+@starting-style { dialog.sheet[open]::backdrop { background: rgb(0 0 0 / 0); } }
+
+.sheet__form { display: flex; flex-direction: column; height: 100dvh; }
+.sheet__head {
+  display: flex; align-items: start; justify-content: space-between; gap: var(--sp-3);
+  padding: var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+.sheet__title { font-size: var(--step-1); font-weight: 750; letter-spacing: -0.02em; }
+:lang(ka) .sheet__title { letter-spacing: 0; font-weight: 700; }
+.sheet__body { flex: 1; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr); }
+.sheet__body--split { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 62rem) {
+  .sheet__body--split { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+.sheet__fields { padding: var(--sp-5); min-width: 0; }
+.sheet__preview {
+  padding: var(--sp-5);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+}
+@media (min-width: 62rem) {
+  .sheet__preview { border-top: 0; border-left: 1px solid var(--line); position: sticky; top: 0; align-self: start; }
+}
+.sheet__preview .card { cursor: default; }
+.sheet__preview .card:hover { translate: none; box-shadow: none; border-color: var(--line); }
+.sheet__foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.a-dirty { font-size: var(--step--2); font-weight: 650; color: var(--promo); }
+
+/* hero preview (banners) */
+.a-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-3);
+  border: 1px solid var(--line);
+  padding: var(--sp-6);
+  background: var(--surface);
+  display: grid;
+  gap: var(--sp-3);
+  align-content: center;
+  min-height: 240px;
+}
+.a-hero::before {
+  content: '';
+  position: absolute;
+  inset: -40% -20% auto -30%;
+  height: 150%;
+  background: radial-gradient(closest-side, var(--tone, var(--accent)), transparent 72%);
+  opacity: 0.22;
+  pointer-events: none;
+}
+.a-hero > * { position: relative; }
+.a-hero h3 { font-size: var(--step-3); font-weight: 800; letter-spacing: -0.028em; line-height: 1.05; }
+:lang(ka) .a-hero h3 { letter-spacing: 0; line-height: 1.2; font-weight: 700; }
+.a-hero p { color: var(--text-2); max-width: 46ch; font-size: var(--step--1); }
+
+/* preview read-outs */
+.a-readout { display: grid; gap: var(--sp-2); font-size: var(--step--2); color: var(--text-3); }
+.a-readout div { display: flex; justify-content: space-between; gap: var(--sp-3); }
+.a-readout b { color: var(--text-2); font-variant-numeric: tabular-nums lining-nums; }
+
+/* ------------------------------------------------------------- responsive */
+@media (max-width: 68rem) {
+  body.adm { grid-template-columns: minmax(0, 1fr); }
+  .adm-side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: var(--sp-3) var(--sp-4);
+    overflow-x: auto;
+  }
+  .adm-brand { flex: none; }
+  .adm-brand__tag { display: none; }
+  .adm-nav { flex-direction: row; gap: var(--sp-2); overflow: visible; }
+  .adm-nav a { white-space: nowrap; }
+  .adm-nav a[aria-current='page']::before { display: none; }
+  .adm-nav .adm-nav__n { display: none; }
+  .adm-side__foot { display: none; }
+  .adm-top { padding: var(--sp-4); }
+  .adm-body { padding: var(--sp-4); }
+}
+</style>
+</head>
+
+<body class="adm">
+
+<a class="skip" href="#adminMain">გადადი მთავარ შიგთავსზე</a>
+
+<!-- ── sidebar ──────────────────────────────────────────────────────────── -->
+<aside class="adm-side">
+  <div class="adm-brand">
+    <a class="logo" href="index.html" aria-label="NORVA — მაღაზიაზე გადასვლა">
+      <!-- A bench rule under a calibration notch: the mark is a measurement,
+           not a picture of anything. Two strokes, both from the theme. -->
+      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M14.8 10 20 20.5 25.2 10" stroke="var(--accent)" stroke-width="2.9"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 20.5V31" stroke="var(--accent)" stroke-width="2.9" stroke-linecap="round"/>
+        <path d="M4 31h32" stroke="var(--text)" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M9.5 31v-5M15 31v-3M25 31v-3M30.5 31v-5" stroke="var(--text)"
+              stroke-width="2.2" stroke-linecap="round" opacity=".38"/>
+      </svg>
+      <span class="logo__word">NOR<b>VA</b></span>
+    </a>
+    <p class="adm-brand__tag">CMS</p>
+  </div>
+
+  <nav class="adm-nav" id="admNav" aria-label="CMS"></nav>
+
+  <div class="adm-side__foot">
+    <a href="index.html" id="admStorefront">↗ მაღაზია</a>
+    <span id="admLegal"></span>
+  </div>
+</aside>
+
+<!-- ── main column ──────────────────────────────────────────────────────── -->
+<div>
+  <header class="adm-top">
+    <div>
+      <p class="a-eyebrow" id="admEyebrow">NORVA CMS</p>
+      <h1 class="adm-title" id="admTitle">—</h1>
+    </div>
+
+    <div class="adm-tools">
+      <span class="a-pill" id="admStamp"></span>
+
+      <button class="icon-btn" id="themeBtn" aria-label="თემის შეცვლა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="themeIcon">
+          <circle cx="12" cy="12" r="4.5"/>
+          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/>
+        </svg>
+      </button>
+
+      <div class="lang" role="group" aria-label="ენა">
+        <button data-lang="ka" aria-pressed="true">ქარ</button>
+        <button data-lang="en" aria-pressed="false">EN</button>
+        <button data-lang="ru" aria-pressed="false">RU</button>
+      </div>
+
+      <a class="btn btn--ghost btn--sm" href="index.html" id="admShopBtn">მაღაზია →</a>
+    </div>
+  </header>
+
+  <main id="adminMain" class="adm-body" tabindex="-1"></main>
+</div>
+
+<!-- ── slide-over editor ────────────────────────────────────────────────── -->
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle"></dialog>
+
+<div class="toast-zone" id="toastZone" aria-live="polite" aria-atomic="false"></div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

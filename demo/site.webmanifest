@@ -1,0 +1,13 @@
+{
+  "name": "NORVA",
+  "short_name": "NORVA",
+  "description": "Demo build. Every company, price, product and order in it is invented.",
+  "lang": "ka",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#131110",
+  "theme_color": "#131110"
+}

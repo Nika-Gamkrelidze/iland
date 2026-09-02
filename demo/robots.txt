@@ -1,0 +1,6 @@
+# This is a public demo build. It must not be indexed anywhere.
+# Enforced twice over: here, and by the `X-Robots-Tag: noindex, nofollow`
+# response header set in vercel.json.
+
+User-agent: *
+Disallow: /
