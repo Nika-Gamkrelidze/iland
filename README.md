@@ -54,7 +54,7 @@ demo/
     store.js             the single source of state (sessionStorage)
     seed.js              the invented catalogue, orders and copy
     i18n.js              ka / en / ru strings and language switching
-    devices.js           device and model data used by the repair flow
+    devices.js           parametric SVG hardware archetypes (drawn, not photographed)
     fluid.js             background simulation
     fx.js                scroll and pointer effects
     contrast.js          per-glyph text contrast against the background
